@@ -1,4 +1,6 @@
 from datetime import datetime
+from data_modeler import modeler
+from scraper_helper import playwright_scraper
 
 # Preparation
 date = datetime.now().strftime('%d%m%y')
