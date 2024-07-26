@@ -1,4 +1,4 @@
-import pandas as pd
+import re
 from tqdm import tqdm
 from time import sleep
 from bs4 import BeautifulSoup as bs
