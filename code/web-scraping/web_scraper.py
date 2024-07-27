@@ -1,6 +1,18 @@
 from datetime import datetime
-from data_modeler import modeler
-from scraper_helper import playwright_scraper
+
+def anime_season(month: str) -> str:
+    """
+    This function converts a given month (as a string) into its corresponding season.
+
+    Parameters:
+    - month (str): A string representing the month in the format 'MM'. The valid values are '01' to '12'.
+
+    Returns:
+    - str: A string representing the season. The possible values are 'Winter', 'Spring', 'Summer', 'Fall', or 'Unspecified' if the input month is not within the range of 1 to 12.
+    """
+    month_num = int(month)
+    seasons = ["Winter", "Spring", "Summer", "Fall"]
+    return seasons[(month_num - 1) // 3] if 1 <= month_num <= 12 else "Unspecified"
 
 # Preparation
 date = datetime.now().strftime('%d%m%y')
