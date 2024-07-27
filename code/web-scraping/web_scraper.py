@@ -1,11 +1,7 @@
-import re
 import pandas as pd
 import requests
-from tqdm import tqdm
-from time import sleep
 from datetime import datetime
 from bs4 import BeautifulSoup as bs
-from playwright.sync_api import sync_playwright
 
 def anime_season(month: str) -> str:
     """
@@ -170,6 +166,6 @@ url_list = [
 if __name__ == '__main__':
     all_data = []
     for url in url_list:
-        all_data.extend(playwright_scraper(url, 100))
+        all_data.extend(fetch_and_scrape(url, 100))
     
     modeler(date, all_data)
