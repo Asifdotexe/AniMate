@@ -101,7 +101,19 @@ def scrape_anime_data(anime_item) -> dict[str, str]:
     }
 
 def fetch_and_scrape(url: str, page_limit: int) -> list[dict[str, str]]:
-    """Fetch and scrape anime data from the given URL."""
+    """
+    Fetch and scrape anime data from the given URL.
+
+    Args:
+        url (str): The base URL to scrape data from.
+        page_limit (int): The number of pages to scrape.
+
+    Returns:
+        list[dict[str, str]]: A list of dictionaries containing scraped anime data.
+
+    This function iterates over pages up to the specified limit, constructs the URL for each page,
+    and scrapes data using BeautifulSoup. It handles HTTP errors and stops on exceptions.
+    """
     all_data = []
     for page_num in range(1, page_limit + 1):
         page_url = f'{url}?page={page_num}'
