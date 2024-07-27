@@ -14,6 +14,51 @@ def anime_season(month: str) -> str:
     seasons = ["Winter", "Spring", "Summer", "Fall"]
     return seasons[(month_num - 1) // 3] if 1 <= month_num <= 12 else "Unspecified"
 
+def safe_text(element, default='N/A'):
+    """
+    This function attempts to extract the text content from a given BeautifulSoup element.
+
+    Parameters:
+    - element (bs4.element.Tag): A BeautifulSoup element representing the HTML element containing the text to be parsed.
+    - default (str): A default value to return if the element is not found or if the text cannot be parsed.
+
+    Returns:
+    - str: The text content of the element, or the default value if the element is not found or if the text cannot be parsed.
+    """
+    return element.text.strip() if element else default
+
+def safe_int(element, default='N/A'):
+    """
+    This function attempts to extract an integer value from the text of an element.
+
+    Parameters:
+    - element (bs4.element.Tag): A BeautifulSoup element representing the HTML element containing the text to be parsed.
+    - default (str): A default value to return if the element is not found or if the text cannot be parsed as an integer.
+
+    Returns:
+    - int or str: An integer value extracted from the text of the element, or the default value if the text cannot be parsed as an integer.
+    """
+    try:
+        return int(element.text.strip().replace(',', '')) if element else default
+    except ValueError:
+        return default
+    
+def safe_float(element, default='N/A'):
+    """
+    This function attempts to extract a float value from the text of an element.
+
+    Parameters:
+    - element (bs4.element.Tag): A BeautifulSoup element representing the HTML element containing the text to be parsed.
+    - default (str): A default value to return if the element is not found or if the text cannot be parsed as a float.
+
+    Returns:
+    - float or str: A float value extracted from the text of the element, or the default value if the text cannot be parsed as a float.
+    """
+    try:
+        return float(element.text.strip()) if element else default
+    except ValueError:
+        return default
+
 # Preparation
 date = datetime.now().strftime('%d%m%y')
 
