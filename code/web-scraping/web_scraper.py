@@ -1,4 +1,11 @@
+import re
+import pandas as pd
+import requests
+from tqdm import tqdm
+from time import sleep
 from datetime import datetime
+from bs4 import BeautifulSoup as bs
+from playwright.sync_api import sync_playwright
 
 def anime_season(month: str) -> str:
     """
@@ -119,6 +126,25 @@ def fetch_and_scrape(url: str, page_limit: int) -> list[dict[str, str]]:
             break
 
     return all_data
+
+def modeler(date: str, data: list[dict[str, str]]) -> None:
+    """
+    Processes and saves anime data to a CSV file.
+
+    -----
+    Parameters:
+    - date (str): The date string used to name the CSV file.
+    - data (List[Dict[str, str]]): A list of dictionaries containing anime data.
+
+    -----
+    The function converts the list of dictionaries to a DataFrame, removes duplicate entries,
+    and saves the DataFrame to a CSV file in the 'data/processed' directory.
+    """
+    df = pd.DataFrame(data)
+    df.drop_duplicates(inplace=True)
+    file_path = 'data/raw'    
+    df.to_csv(f'../../{file_path}/AnimeData_{date}.csv', index=False)
+    print(f'Data saved to {file_path}/AnimeData_{date}.csv')
 
 date = datetime.now().strftime('%d%m%y')
 
