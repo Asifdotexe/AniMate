@@ -97,6 +97,28 @@ def scrape_anime_data(anime_item) -> dict[str, str]:
         'Synopsis': safe_text(anime_item.find('p', class_='preline'))
     }
 
+def fetch_and_scrape(url: str, page_limit: int) -> list[dict[str, str]]:
+    """Fetch and scrape anime data from the given URL."""
+    all_data = []
+    for page_num in range(1, page_limit + 1):
+        page_url = f'{url}?page={page_num}'
+        print(f'Scraping {page_url}...')
+        
+        try:
+            response = requests.get(page_url)
+            response.raise_for_status()  # Raise an error for bad responses
+            soup = bs(response.text, 'html.parser')
+
+            anime_list = soup.find_all('div', class_='anime-item')  # Update with the actual class for anime items
+            for anime_item in anime_list:
+                anime_data = scrape_anime_data(anime_item)
+                all_data.append(anime_data)
+                
+        except Exception as e:
+            print(f'Error fetching {page_url}: {e}')
+            break
+
+    return all_data
 
 date = datetime.now().strftime('%d%m%y')
 
