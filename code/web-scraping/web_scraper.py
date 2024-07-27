@@ -59,7 +59,45 @@ def safe_float(element, default='N/A'):
     except ValueError:
         return default
 
-# Preparation
+def scrape_anime_data(anime_item) -> dict[str, str]:
+    """
+    This function extracts and returns the scraped data of an anime from the given anime_item.
+   
+    Parameters:
+    - anime_item (bs4.element.Tag): A BeautifulSoup element representing the anime item to scrape.
+
+    Returns:
+    - dict[str, str]: A dictionary containing the scraped data of the anime, with keys representing the data categories and values representing the corresponding data.
+
+    The dictionary contains the following keys and their respective data categories:
+    - 'Title': The title of the anime.
+    - 'Voters': The number of voters for the anime.
+    - 'Avg Score': The average score of the anime.
+    - 'Start Date': The start date of the anime.
+    - 'Status': The status of the anime (either 'finished' or 'airing').
+    - 'Studio': The studio that produced the anime.
+    - 'Genres': A comma-separated list of genres for the anime.
+    - 'Media': The type of media the anime belongs to.
+    - 'Eps': The number of episodes in the anime.
+    - 'Duration': The duration of each episode in the anime.
+    - 'Synopsis': The synopsis or summary of the anime.
+    """
+    return {
+        'Title': safe_text(anime_item.find('a', class_='link-title')),
+        'Voters': safe_int(anime_item.find('div', class_='scormem-item member')),
+        'Avg Score': safe_float(anime_item.find('div', title='Score')),
+        'Start Date': safe_text(anime_item.find('span', class_='item')),
+        'Status': safe_text(
+            anime_item.find('span', class_='item finished') or anime_item.find('span', class_='item airing')),
+        'Studio': safe_text(anime_item.find('span', class_='producer')),
+        'Genres': ', '.join(genre.text.strip() for genre in anime_item.find_all('span', class_='genre')) or 'N/A',
+        'Media': safe_text(anime_item.find('span', class_='type')),
+        'Eps': safe_text(anime_item.find('span', class_='eps')).split()[0],
+        'Duration': safe_text(anime_item.find('span', class_='duration')).split()[0],
+        'Synopsis': safe_text(anime_item.find('p', class_='preline'))
+    }
+
+
 date = datetime.now().strftime('%d%m%y')
 
 # EXTRACT AND TRANSFORM
