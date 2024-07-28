@@ -3,6 +3,7 @@ import pandas as pd
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup as bs
+import time
 
 date = datetime.now().strftime('%d%m%y')
 
@@ -174,6 +175,9 @@ def fetch_and_scrape(url: str, page_limit: int) -> list[dict[str, str]]:
             for anime_item in anime_list:
                 anime_data = scrape_anime_data(anime_item)
                 all_data.append(anime_data)
+
+            # Adding a delay between requests
+            time.sleep(2)  # Delay for 2 seconds
 
         except Exception as e:
             print(f'Error fetching {page_url}: {e}')
