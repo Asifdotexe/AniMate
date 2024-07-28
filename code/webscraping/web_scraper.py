@@ -4,7 +4,7 @@ import requests
 from datetime import datetime
 from bs4 import BeautifulSoup as bs
 import time
-from typing import List, Dict
+from tqdm import tqdm
 
 def get_current_date() -> str:
     """
@@ -14,6 +14,7 @@ def get_current_date() -> str:
     - str: Current date formatted as 'DDMMYY'.
     """
     return datetime.now().strftime('%d%m%y')
+
 
 def anime_season(month: str) -> str:
     """
@@ -29,6 +30,7 @@ def anime_season(month: str) -> str:
     seasons = ["Winter", "Spring", "Summer", "Fall"]
     return seasons[(month_num - 1) // 3] if 1 <= month_num <= 12 else "Unspecified"
 
+
 def safe_text(element, default='N/A') -> str:
     """
     Extract the text content from a given BeautifulSoup element.
@@ -41,6 +43,7 @@ def safe_text(element, default='N/A') -> str:
     - str: The text content of the element, or the default value.
     """
     return element.text.strip() if element else default
+
 
 def safe_int(element, default='N/A') -> int:
     """
@@ -58,6 +61,7 @@ def safe_int(element, default='N/A') -> int:
     except ValueError:
         return default
 
+
 def safe_float(element, default='N/A') -> float:
     """
     Extract a float value from the text of an element.
@@ -74,7 +78,8 @@ def safe_float(element, default='N/A') -> float:
     except ValueError:
         return default
 
-def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int = 5) -> List[Dict[str, str]]:
+
+def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int = 5) -> list[dict[str, str]]:
     """
     Fetch and scrape anime data from a given URL.
 
@@ -87,7 +92,7 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
     Returns:
     - list: A list of dictionaries containing scraped anime data.
     """
-    def scrape_anime_data(anime_item) -> Dict[str, str]:
+    def scrape_anime_data(anime_item) -> dict[str, str]:
         """
         Extract data from the HTML content of an anime item.
 
@@ -170,7 +175,7 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
 
     print("Scraping started...")
     all_data = []
-    for page in range(1, page_limit + 1):
+    for page in tqdm(range(1, page_limit + 1), desc="Pages"):
         page_url = f"{url}?page={page}"
         for attempt in range(retries):
             try:
@@ -187,32 +192,34 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
                 time.sleep(delay)
     return all_data
 
-def modeler(date: str, data: List[Dict[str, str]]) -> None:
+
+def modeler(date: str, data: list[dict[str, str]]) -> None:
     """
     Processes and saves anime data to a CSV file.
 
     Parameters:
     - date (str): The date string used to name the CSV file.
-    - data (List[Dict[str, str]]): A list of dictionaries containing anime data.
+    - data (list[dict[str, str]]): A list of dictionaries containing anime data.
 
     The function converts the list of dictionaries to a DataFrame, removes duplicate entries,
     and saves the DataFrame to a CSV file in the 'data/raw' directory.
     """
     df = pd.DataFrame(data)
     df.drop_duplicates(inplace=True)
-    file_path = 'data/raw'    
+    file_path = 'data/raw'
     df.to_csv(f'../../{file_path}/AnimeData_{date}.csv', index=False)
     print(f'Data saved to {file_path}/AnimeData_{date}.csv')
 
+
 def main():
-    url_list = [   
+    url_list = [
         'https://myanimelist.net/anime/genre/1/',  # Action
         'https://myanimelist.net/anime/genre/2/',  # Adventure
         'https://myanimelist.net/anime/genre/5/',  # Avant Garde
         'https://myanimelist.net/anime/genre/4/',  # Comedy
         'https://myanimelist.net/anime/genre/8/',  # Drama
-        'https://myanimelist.net/anime/genre/10/', # Fantasy
-        'https://myanimelist.net/anime/genre/47/', # Gourmet
+        'https://myanimelist.net/anime/genre/10/',  # Fantasy
+        'https://myanimelist.net/anime/genre/47/',  # Gourmet
         'https://myanimelist.net/anime/genre/14/', # Horror
         'https://myanimelist.net/anime/genre/7/',  # Mystery
         'https://myanimelist.net/anime/genre/22/', # Romance
@@ -222,15 +229,16 @@ def main():
         'https://myanimelist.net/anime/genre/37/', # Supernatural
         'https://myanimelist.net/anime/genre/41/'  # Suspense
     ]
-    
+
     current_date = get_current_date()
     all_anime_data = []
 
-    for url in url_list:
+    for url in tqdm(url_list, desc="Genres"):
         scraped_data = fetch_and_scrape(url, page_limit=100)
         all_anime_data.extend(scraped_data)
-    
+
     modeler(current_date, all_anime_data)
+
 
 if __name__ == '__main__':
     main()
