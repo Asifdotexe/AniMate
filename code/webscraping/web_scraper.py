@@ -4,75 +4,83 @@ import requests
 from datetime import datetime
 from bs4 import BeautifulSoup as bs
 import time
+from typing import List, Dict
 
-date = datetime.now().strftime('%d%m%y')
+def get_current_date() -> str:
+    """
+    Get the current date formatted as 'DDMMYY'.
+
+    Returns:
+    - str: Current date formatted as 'DDMMYY'.
+    """
+    return datetime.now().strftime('%d%m%y')
 
 def anime_season(month: str) -> str:
     """
-    This function converts a given month (as a string) into its corresponding season.
+    Converts a given month (as a string) into its corresponding season.
 
     Parameters:
     - month (str): A string representing the month in the format 'MM'. The valid values are '01' to '12'.
 
     Returns:
-    - str: A string representing the season. The possible values are 'Winter', 'Spring', 'Summer', 'Fall', or 'Unspecified' if the input month is not within the range of 1 to 12.
+    - str: A string representing the season.
     """
     month_num = int(month)
     seasons = ["Winter", "Spring", "Summer", "Fall"]
     return seasons[(month_num - 1) // 3] if 1 <= month_num <= 12 else "Unspecified"
 
-def safe_text(element, default='N/A'):
+def safe_text(element, default='N/A') -> str:
     """
-    This function attempts to extract the text content from a given BeautifulSoup element.
-    
+    Extract the text content from a given BeautifulSoup element.
+
     Parameters:
-    - element (bs4.element.Tag): A BeautifulSoup element representing the HTML element containing the text to be parsed.
-    - default (str): A default value to return if the element is not found or if the text cannot be parsed.
-    
+    - element (bs4.element.Tag): A BeautifulSoup element containing the text to be parsed.
+    - default (str): A default value to return if the element is not found or the text cannot be parsed.
+
     Returns:
-    - str: The text content of the element, or the default value if the element is not found or if the text cannot be parsed.
+    - str: The text content of the element, or the default value.
     """
     return element.text.strip() if element else default
 
-def safe_int(element, default='N/A'):
+def safe_int(element, default='N/A') -> int:
     """
-    This function attempts to extract an integer value from the text of an element.
-    
+    Extract an integer value from the text of an element.
+
     Parameters:
-    - element (bs4.element.Tag): A BeautifulSoup element representing the HTML element containing the text to be parsed.
-    - default (str): A default value to return if the element is not found or if the text cannot be parsed as an integer.
-    
+    - element (bs4.element.Tag): A BeautifulSoup element containing the text to be parsed.
+    - default (str): A default value to return if the element is not found or the text cannot be parsed as an integer.
+
     Returns:
-    - int or str: An integer value extracted from the text of the element, or the default value if the text cannot be parsed as an integer.
+    - int or str: An integer value extracted from the text of the element, or the default value.
     """
     try:
         return int(element.text.strip().replace(',', '')) if element else default
     except ValueError:
         return default
 
-def safe_float(element, default='N/A'):
+def safe_float(element, default='N/A') -> float:
     """
-    This function attempts to extract a float value from the text of an element.
-    
+    Extract a float value from the text of an element.
+
     Parameters:
-    - element (bs4.element.Tag): A BeautifulSoup element representing the HTML element containing the text to be parsed.
-    - default (str): A default value to return if the element is not found or if the text cannot be parsed as a float.
-    
+    - element (bs4.element.Tag): A BeautifulSoup element containing the text to be parsed.
+    - default (str): A default value to return if the element is not found or the text cannot be parsed as a float.
+
     Returns:
-    - float or str: A float value extracted from the text of the element, or the default value if the text cannot be parsed as a float.
+    - float or str: A float value extracted from the text of the element, or the default value.
     """
     try:
         return float(element.text.strip()) if element else default
     except ValueError:
         return default
 
-def scrape_anime_data(anime_item) -> dict[str, str]:
+def scrape_anime_data(anime_item) -> Dict[str, str]:
     """
     Extract data from the HTML content of an anime item.
-    
+
     Parameters:
     - anime_item (BeautifulSoup): A BeautifulSoup object containing the HTML of an anime item.
-    
+
     Returns:
     - dict: A dictionary with the number of episodes and the release year.
     """
@@ -146,7 +154,7 @@ def scrape_anime_data(anime_item) -> dict[str, str]:
         'Rating': rating,
 }
 
-def fetch_and_scrape(url: str, page_limit: int) -> list[dict[str, str]]:
+def fetch_and_scrape(url: str, page_limit: int) -> List[Dict[str, str]]:
     """
     Fetches and scrapes anime data from a given URL and page limit.
 
@@ -156,10 +164,6 @@ def fetch_and_scrape(url: str, page_limit: int) -> list[dict[str, str]]:
 
     Returns:
     - list[dict[str, str]]: A list of dictionaries containing the scraped anime data. Each dictionary contains the number of episodes and the release year of an anime item.
-
-    The function sends HTTP requests to the specified URL and retrieves the HTML content. It then uses BeautifulSoup to parse the HTML and extract the required data from each anime item. The extracted data is stored in a list of dictionaries and returned as the result.
-
-    If an error occurs during the fetching or scraping process, the function prints an error message and stops further processing.
     """
     all_data = []
     for page_num in range(1, page_limit + 1):
@@ -185,16 +189,14 @@ def fetch_and_scrape(url: str, page_limit: int) -> list[dict[str, str]]:
 
     return all_data
 
-def modeler(date: str, data: list[dict[str, str]]) -> None:
+def modeler(date: str, data: List[Dict[str, str]]) -> None:
     """
     Processes and saves anime data to a CSV file.
 
-    -----
     Parameters:
     - date (str): The date string used to name the CSV file.
     - data (List[Dict[str, str]]): A list of dictionaries containing anime data.
 
-    -----
     The function converts the list of dictionaries to a DataFrame, removes duplicate entries,
     and saves the DataFrame to a CSV file in the 'data/processed' directory.
     """
@@ -204,28 +206,33 @@ def modeler(date: str, data: list[dict[str, str]]) -> None:
     df.to_csv(f'../../{file_path}/AnimeData_{date}.csv', index=False)
     print(f'Data saved to {file_path}/AnimeData_{date}.csv')
 
-# EXTRACT AND TRANSFORM
-url_list = [   
-    'https://myanimelist.net/anime/genre/1/',  # Action
-    'https://myanimelist.net/anime/genre/2/',  # Adventure
-    'https://myanimelist.net/anime/genre/5/',  # Avant Garde
-    'https://myanimelist.net/anime/genre/4/',  # Comedy
-    'https://myanimelist.net/anime/genre/8/',  # Drama
-    'https://myanimelist.net/anime/genre/10/', # Fantasy
-    'https://myanimelist.net/anime/genre/47/', # Gourmet
-    'https://myanimelist.net/anime/genre/14/', # Horror
-    'https://myanimelist.net/anime/genre/7/',  # Mystery
-    'https://myanimelist.net/anime/genre/22/', # Romance
-    'https://myanimelist.net/anime/genre/24/', # Sci-fi
-    'https://myanimelist.net/anime/genre/36/', # Slice-of-life
-    'https://myanimelist.net/anime/genre/30/', # Sport
-    'https://myanimelist.net/anime/genre/37/', # Supernatural
-    'https://myanimelist.net/anime/genre/41/'  # Suspense
-]
+def main():
+    url_list = [   
+        'https://myanimelist.net/anime/genre/1/',  # Action
+        'https://myanimelist.net/anime/genre/2/',  # Adventure
+        'https://myanimelist.net/anime/genre/5/',  # Avant Garde
+        'https://myanimelist.net/anime/genre/4/',  # Comedy
+        'https://myanimelist.net/anime/genre/8/',  # Drama
+        'https://myanimelist.net/anime/genre/10/', # Fantasy
+        'https://myanimelist.net/anime/genre/47/', # Gourmet
+        'https://myanimelist.net/anime/genre/14/', # Horror
+        'https://myanimelist.net/anime/genre/7/',  # Mystery
+        'https://myanimelist.net/anime/genre/22/', # Romance
+        'https://myanimelist.net/anime/genre/24/', # Sci-Fi
+        'https://myanimelist.net/anime/genre/36/', # Slice of Life
+        'https://myanimelist.net/anime/genre/30/', # Sports
+        'https://myanimelist.net/anime/genre/37/', # Supernatural
+        'https://myanimelist.net/anime/genre/41/'  # Suspense
+    ]
+    
+    current_date = get_current_date()
+    all_anime_data = []
+
+    for url in url_list:
+        scraped_data = fetch_and_scrape(url, page_limit=5)
+        all_anime_data.extend(scraped_data)
+    
+    modeler(current_date, all_anime_data)
 
 if __name__ == '__main__':
-    all_data = []
-    for url in url_list:
-        all_data.extend(fetch_and_scrape(url, 100))
-    
-    modeler(date, all_data)
+    main()
