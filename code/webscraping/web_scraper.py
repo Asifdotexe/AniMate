@@ -173,8 +173,9 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
             'Rating': rating,
         }
 
-    print("Scraping started...")
     all_data = []
+    consecutive_404_errors = 0  # Counter for consecutive 404 errors
+
     for page in tqdm(range(1, page_limit + 1), desc="Pages"):
         page_url = f"{url}?page={page}"
         for attempt in range(retries):
@@ -186,12 +187,20 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
                 for anime_item in anime_list:
                     anime_data = scrape_anime_data(str(anime_item))
                     all_data.append(anime_data)
+                consecutive_404_errors = 0  # Reset counter on successful fetch
                 break
+            except requests.HTTPError as e:
+                if response.status_code == 404:
+                    consecutive_404_errors += 1
+                    if consecutive_404_errors > 3:
+                        print(f"Encountered 404 error for more than 3 pages in a row for {url}. Moving to the next genre.")
+                        return all_data
+                print(f"Error fetching {page_url}: {e}. Retrying in {delay} seconds...")
+                time.sleep(delay)
             except requests.RequestException as e:
                 print(f"Error fetching {page_url}: {e}. Retrying in {delay} seconds...")
                 time.sleep(delay)
     return all_data
-
 
 def modeler(date: str, data: list[dict[str, str]]) -> None:
     """
