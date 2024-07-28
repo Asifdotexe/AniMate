@@ -86,7 +86,7 @@ The Anime Data Scraper is a Python script that scrapes anime data from a specifi
 6. **End**: The script ends after processing all URLs.
 
 ## Structure
-
+```plaintext
 +----------------------------------+
 |            main()                |
 +----------------------------------+
@@ -114,11 +114,11 @@ The Anime Data Scraper is a Python script that scrapes anime data from a specifi
 |  +----------------------------+  |
 |                                  |
 +----------------------------------+
-
+```
 
 ## Flow of the function
-
-Start
+```plaintext
+ Start
   |
   v
 get_current_date()
@@ -131,16 +131,16 @@ fetch_and_scrape(url)
   |
   +--------------------------+
   |                          |
-  |  Page Loop               |
-  |    |                     |
-  |    v                     |
-  |  Request Handling        |
-  |    |                     |
-  |    v                     |
-  |  Error Handling          |
-  |    |                     |
-  |    v                     |
-  |  Data Extraction         |
+  |       Page Loop          |
+  |           |              |
+  |           v              |
+  |    Request Handling      |
+  |           |              |
+  |           v              |
+  |     Error Handling       |
+  |           |              |
+  |           v              |
+  |     Data Extraction      |
   +--------------------------+
   |
   v
@@ -148,6 +148,6 @@ modeler(date, data)
   |
   v
 End
-
+```
 ## Conclusion
 This script provides an automated way to scrape anime data from a set of URLs and store the data in a CSV file. It handles errors and retries fetching data as necessary, ensuring that it can process a large amount of data efficiently.
