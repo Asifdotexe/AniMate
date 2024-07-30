@@ -104,9 +104,9 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
         """
         soup = bs(anime_item, 'html.parser')
 
-        title = safe_text(soup.find('h2', class_='h2_anime_title').find('a'))
+        title = soup.find('h2', class_='h2_anime_title').find('a')
 
-        start_date_text = safe_text(soup.find('span', class_='js-start_date'), 'N/A')
+        start_date_text = soup.find('span', class_='js-start_date')
         release_year = start_date_text[:4] if start_date_text != 'N/A' else 'N/A'
 
         info_div = soup.find('div', class_='info')
@@ -116,7 +116,7 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
             match = re.search(r'(\d+)\s*eps', eps_text)
             number_of_episodes = match.group(1) if match else 'N/A'
 
-        status = safe_text(info_div.find('span', class_='item finished') or info_div.find('span', class_='item airing'))
+        status = info_div.find('span', class_='item finished') or info_div.find('span', class_='item airing')
 
         genres_div = soup.find('div', class_='genres-inner js-genre-inner')
         genres = ', '.join([genre.find('a').text.strip() for genre in genres_div.find_all('span', class_='genre')]) if genres_div else 'N/A'
@@ -150,13 +150,13 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
                 themes = ', '.join(theme_matches) if theme_matches else 'N/A'
 
         # Extract the rating
-        rating = safe_float(soup.find('div', class_='scormem-item score score-label score-8'), 'N/A')
+        rating = soup.find('div', class_='scormem-item score score-label score-8')
 
         # Extract the voter count
-        voters = safe_int(soup.find('div', class_='scormem-item member'), 'N/A')
+        voters = soup.find('div', class_='scormem-item member')
 
         # Extract synopsis
-        synopsis = safe_text(soup.find('div', class_='synopsis js-synopsis').find('p', class_='preline'), 'N/A')
+        synopsis = soup.find('div', class_='synopsis js-synopsis').find('p', class_='preline')
 
         return {
             'Title': title,
