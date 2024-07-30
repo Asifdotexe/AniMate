@@ -221,23 +221,9 @@ def modeler(date: str, data: list[dict[str, str]]) -> None:
 
 
 def main():
-    url_list = [
-        'https://myanimelist.net/anime/genre/1/',  # Action
-        'https://myanimelist.net/anime/genre/2/',  # Adventure
-        'https://myanimelist.net/anime/genre/5/',  # Avant Garde
-        'https://myanimelist.net/anime/genre/4/',  # Comedy
-        'https://myanimelist.net/anime/genre/8/',  # Drama
-        'https://myanimelist.net/anime/genre/10/',  # Fantasy
-        'https://myanimelist.net/anime/genre/47/',  # Gourmet
-        'https://myanimelist.net/anime/genre/14/', # Horror
-        'https://myanimelist.net/anime/genre/7/',  # Mystery
-        'https://myanimelist.net/anime/genre/22/', # Romance
-        'https://myanimelist.net/anime/genre/24/', # Sci-Fi
-        'https://myanimelist.net/anime/genre/36/', # Slice of Life
-        'https://myanimelist.net/anime/genre/30/', # Sports
-        'https://myanimelist.net/anime/genre/37/', # Supernatural
-        'https://myanimelist.net/anime/genre/41/'  # Suspense
-    ]
+    base_url = 'https://myanimelist.net/anime/genre/'
+    genre_ids = range(1, 44)  # Genre IDs from 1 to 43
+    url_list = [f'{base_url}{genre_id}/' for genre_id in genre_ids]
 
     current_date = get_current_date()
     all_anime_data = []
@@ -247,7 +233,6 @@ def main():
         all_anime_data.extend(scraped_data)
 
     modeler(current_date, all_anime_data)
-
 
 if __name__ == '__main__':
     main()
