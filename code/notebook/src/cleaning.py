@@ -1,9 +1,6 @@
 import re
 import string
 
-import re
-import string
-
 def nlp_cleaning(text):
     """
     Perform various text cleaning operations on the input text.
@@ -25,10 +22,9 @@ def nlp_cleaning(text):
         return ''  # Handle non-text values
 
     text = text.lower()
-    text = re.sub(r'http[s]?://\S+', '', text)  # Remove URLs
-    text = text.encode('ascii', 'ignore').decode('ascii')  # Remove non-ASCII characters
-    text = re.sub(r'\d+', '', text)  # Remove numbers
-    text = text.translate(str.maketrans('', '', string.punctuation))  # Remove punctuation
-    text = re.sub(r'\s+', ' ', text).strip()  # Remove extra whitespaces
+    text = re.sub(r'http[s]?://\S+', '', text)
+    text = text.encode('ascii', 'ignore').decode('ascii')
+    text = re.sub(r'\d+', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
     
     return text
