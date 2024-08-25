@@ -111,6 +111,26 @@ def nlp_preprocessing(text, method='lemmatize'):
     processed_text = ' '.join(tokens)
     return processed_text
 
+def remove_mature_content(text):
+    """
+    Remove specific words related to mature content from the input text.
+
+    Parameters:
+    text (str): The input text from which to remove mature content words.
+
+    Returns:
+    str: The text with mature content words removed.
+    """
+    if not isinstance(text, str):
+        return text  # Return the original text if it's not a string
+    
+    mature_words = ['hentai', 'ecchi', 'erotica', 'mature']
+    
+    # Split the text by commas, remove the mature words, and join back
+    cleaned_text = ", ".join([word.strip() for word in text.split(',') if word.strip().lower() not in mature_words])
+    
+    return cleaned_text
+
 
 def lemmatize_with_pos(tokens):
     """
