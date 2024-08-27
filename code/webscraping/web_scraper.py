@@ -10,97 +10,83 @@ def get_current_date() -> str:
     """
     Get the current date formatted as 'DDMMYY'.
 
-    Returns:
-    - str: Current date formatted as 'DDMMYY'.
+    :returns: Current date formatted as 'DDMMYY'.
     """
     return datetime.now().strftime('%d%m%y')
-
 
 def anime_season(month: str) -> str:
     """
     Converts a given month (as a string) into its corresponding season.
 
-    Parameters:
-    - month (str): A string representing the month in the format 'MM'. The valid values are '01' to '12'.
+    :param month: A string representing the month in the format 'MM'. The valid values are '01' to '12'.
 
-    Returns:
-    - str: A string representing the season.
+    :returns: A string representing the season.
     """
     month_num = int(month)
     seasons = ["Winter", "Spring", "Summer", "Fall"]
     return seasons[(month_num - 1) // 3] if 1 <= month_num <= 12 else "Unspecified"
 
-
-def safe_text(element, default='N/A') -> str:
+def safe_text(element: bs, default: str ='N/A') -> str:
     """
     Extract the text content from a given BeautifulSoup element.
+    
+    :param element: A BeautifulSoup element containing the text to be parsed.
+    :param default A default value to return if the element is not found or the text cannot be parsed.
 
-    Parameters:
-    - element (bs4.element.Tag): A BeautifulSoup element containing the text to be parsed.
-    - default (str): A default value to return if the element is not found or the text cannot be parsed.
-
-    Returns:
-    - str: The text content of the element, or the default value.
+    :returns: The text content of the element, or the default value.
     """
     return element.text.strip() if element else default
 
-
-def safe_int(element, default='N/A') -> int:
+def safe_int(element: bs, default: str = 'N/A') -> int:
     """
     Extract an integer value from the text of an element.
 
-    Parameters:
-    - element (bs4.element.Tag): A BeautifulSoup element containing the text to be parsed.
-    - default (str): A default value to return if the element is not found or the text cannot be parsed as an integer.
+    :param element: A BeautifulSoup element containing the text to be parsed.
+    :param default: A default value to return if the element is not found or the text cannot be parsed as an integer.
 
-    Returns:
-    - int or str: An integer value extracted from the text of the element, or the default value.
+    :returns: An integer value extracted from the text of the element, or the default value.
     """
     try:
         return int(element.text.strip().replace(',', '')) if element else default
     except ValueError:
         return default
 
-
-def safe_float(element, default='N/A') -> float:
+def safe_float(element: bs, default: str ='N/A') -> float:
     """
     Extract a float value from the text of an element.
 
-    Parameters:
-    - element (bs4.element.Tag): A BeautifulSoup element containing the text to be parsed.
-    - default (str): A default value to return if the element is not found or the text cannot be parsed as a float.
+    :param element: A BeautifulSoup element containing the text to be parsed.
+    :default: A default value to return if the element is not found or the text cannot be parsed as a float.
 
-    Returns:
-    - float or str: A float value extracted from the text of the element, or the default value.
+    :returns: A float value extracted from the text of the element, or the default value.
     """
     try:
         return float(element.text.strip()) if element else default
     except ValueError:
         return default
 
-
-def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int = 5) -> list[dict[str, str]]:
+def fetch_and_scrape(url: str, 
+                     page_limit: int = 1, 
+                     retries: int = 3, 
+                     delay: int = 5
+) -> list[dict[str, str]]:
     """
     Fetch and scrape anime data from a given URL.
 
-    Parameters:
-    - url (str): The URL to fetch and scrape.
-    - page_limit (int): The number of pages to scrape.
-    - retries (int): The number of retries in case of request failure.
-    - delay (int): The delay between retries in seconds.
+    :param url: The URL to fetch and scrape.
+    :param page_limit: The number of pages to scrape.
+    :param retries: The number of retries in case of request failure.
+    :param delay: The delay between retries in seconds.
 
-    Returns:
-    - list: A list of dictionaries containing scraped anime data.
+    :returns: A list of dictionaries containing scraped anime data.
     """
-    def scrape_anime_data(anime_item) -> dict[str, str]:
+    def scrape_anime_data(anime_item: bs) -> dict[str, str]:
         """
         Extract data from the HTML content of an anime item.
 
-        Parameters:
-        - anime_item (BeautifulSoup): A BeautifulSoup object containing the HTML of an anime item.
+        :param anime_item: A BeautifulSoup object containing the HTML of an anime item.
 
-        Returns:
-        - dict: A dictionary with the number of episodes and the release year.
+        :returns: A dictionary with the number of episodes and the release year.
         """
         soup = bs(anime_item, 'html.parser')
 
@@ -123,8 +109,22 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
 
         properties_div = soup.find('div', class_='properties')
 
-        def extract_property(caption):
-            """Helper function to extract property values based on the caption"""
+        def extract_property(caption: str) -> str:
+            """
+            Helper function to extract property values based on the provided caption.
+
+            :param caption: The caption text used to identify the property to extract.
+
+            :returns: A string representing the property value(s) associated with the given caption. 
+                If the property is not found, returns 'N/A'.
+                
+            - The function first checks if `properties_div` is defined and contains elements.
+            - It then searches for all 'div' elements with the class 'property' within `properties_div`.
+            - For each property 'div', it looks for a 'span' with the class 'caption' that matches the provided caption.
+            - If a matching caption is found, it retrieves all 'span' elements with the class 'item' within the same 'div'.
+            - The function joins the text content of these 'item' spans into a single string, separated by commas.
+            - If no items are found or if the caption doesn't match, it returns 'N/A'.
+            """
             if not properties_div:
                 return 'N/A'
             property_divs = properties_div.find_all('div', class_='property')
@@ -206,9 +206,8 @@ def modeler(date: str, data: list[dict[str, str]]) -> None:
     """
     Processes and saves anime data to a CSV file.
 
-    Parameters:
-    - date (str): The date string used to name the CSV file.
-    - data (list[dict[str, str]]): A list of dictionaries containing anime data.
+    :param: date: The date string used to name the CSV file.
+    :param: data: A list of dictionaries containing anime data.
 
     The function converts the list of dictionaries to a DataFrame, removes duplicate entries,
     and saves the DataFrame to a CSV file in the 'data/raw' directory.
