@@ -70,11 +70,3 @@ def recommend_anime_knn(
     distances, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n)
 
     return data.iloc[indices[0]][['title', 'genres']]
-
-tfidf_features_df, tfidf_vectorizer = vectorize(data)
-knn_model = build_knn_model(tfidf_features_df)
-
-# User query for recommendation
-user_query = "I want to watch Fairy tale related movies"
-recommended_animes_query = recommend_anime_knn(user_query, tfidf_vectorizer, knn_model, top_n=5)
-print(recommended_animes_query)
