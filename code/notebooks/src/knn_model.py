@@ -1,0 +1,71 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.neighbors import NearestNeighbors
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import PorterStemmer
+
+stop_words = set(stopwords.words('english'))
+stemmer = PorterStemmer()
+data = pd.read_csv(r'..\..\..\data\final\processed_data_02092024.csv')
+
+def preprocess_text(text: str) -> str:
+    """
+    Tokenize, remove stopwords, and apply stemming to the text.
+
+    :param text: Input text to preprocess.
+    :return: Preprocessed text as a single string.
+    """
+    tokens = word_tokenize(text.lower())
+    processed = [stemmer.stem(word) for word in tokens if word.isalpha() and word not in stop_words]
+    return ' '.join(processed)
+
+def vectorize(df: pd.DataFrame) -> tuple[pd.DataFrame, TfidfVectorizer]:
+    """
+    Vectorize the text data using TF-IDF.
+
+    :param df: DataFrame containing text data.
+    :return: TF-IDF DataFrame and the vectorizer.
+    """
+    tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_features=5000)
+    tfidf_matrix = tfidf_vectorizer.fit_transform(df['combined_text'])
+    tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
+    return tfidf_df, tfidf_vectorizer
+
+def build_knn_model(tfidf_features_df: pd.DataFrame, n_neighbors: int = 10) -> NearestNeighbors:
+    """
+    Build and fit a k-NN model using the TF-IDF features.
+
+    :param tfidf_features_df: DataFrame with TF-IDF features.
+    :param n_neighbors: Number of neighbors to use for k-NN (default is 10).
+    :return: Fitted k-NN model.
+    """
+    knn_model = NearestNeighbors(n_neighbors=n_neighbors, metric='cosine')
+    knn_model.fit(tfidf_features_df)
+    return knn_model
+
+def recommend_anime_knn(query: str, tfidf_vectorizer: TfidfVectorizer, tfidf_features_df: pd.DataFrame, knn_model: NearestNeighbors, top_n: int = 5) -> pd.DataFrame:
+    """
+    Recommend anime titles based on a user query using the k-NN model.
+
+    :param query: The user's input query.
+    :param tfidf_vectorizer: The TF-IDF vectorizer used for the anime data.
+    :param tfidf_features_df: The DataFrame containing TF-IDF features.
+    :param knn_model: The k-NN model for finding similar animes.
+    :param top_n: Number of recommendations to return (default is 10).
+    :return: DataFrame containing the top recommended anime titles.
+    """
+    query_processed = preprocess_text(query)
+    query_tfidf = tfidf_vectorizer.transform([query_processed])
+
+    distances, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n)
+
+    return data.iloc[indices[0]][['title', 'genres']]
+
+tfidf_features_df, tfidf_vectorizer = vectorize(data)
+knn_model = build_knn_model(tfidf_features_df)
+
+# User query for recommendation
+user_query = "I want to watch Fairy tale related movies"
+recommended_animes_query = recommend_anime_knn(user_query, tfidf_vectorizer, tfidf_features_df, knn_model, top_n=5)
+print(recommended_animes_query)
