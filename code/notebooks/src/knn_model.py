@@ -5,6 +5,8 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 
+# Predefined data processing functions
+
 stop_words = set(stopwords.words('english'))
 stemmer = PorterStemmer()
 data = pd.read_csv(r'..\..\..\data\final\processed_data_02092024.csv')
@@ -58,7 +60,6 @@ def recommend_anime_knn(
 
     :param query: The user's input query.
     :param tfidf_vectorizer: The TF-IDF vectorizer used for the anime data.
-    :param tfidf_features_df: The DataFrame containing TF-IDF features.
     :param knn_model: The k-NN model for finding similar animes.
     :param top_n: Number of recommendations to return (default is 10).
     :return: DataFrame containing the top recommended anime titles.
@@ -66,7 +67,19 @@ def recommend_anime_knn(
     """
     query_processed = preprocess_text(query)
     query_tfidf = tfidf_vectorizer.transform([query_processed])
-
     distances, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n)
-
     return data.iloc[indices[0]][['title', 'genres']]
+
+def anime_recommendation_pipeline(user_query: str, top_n: int = 10) -> pd.DataFrame:
+    """
+    Full pipeline to process data, build the k-NN model, and recommend animes based on the user query.
+    
+    :param user_query: The user's input query for anime recommendation.
+    :param top_n: Number of recommendations to return (default is 10).
+    :return: DataFrame containing the top recommended anime titles.
+    :rtype: pd.DataFrame
+    """
+    tfidf_features_df, tfidf_vectorizer = vectorize(data)
+    knn_model = build_knn_model(tfidf_features_df)
+    recommended_animes = recommend_anime_knn(user_query, tfidf_vectorizer, knn_model, top_n)
+    return recommended_animes
