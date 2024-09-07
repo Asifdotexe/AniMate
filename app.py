@@ -65,19 +65,26 @@ def recommend_anime_knn(
     ) -> pd.DataFrame:
     """
     Recommend anime titles based on a user query using the k-NN model.
+    Ensures that any anime containing the query string in its title is not recommended.
 
     :param query: The user's input query.
     :param tfidf_vectorizer: The TF-IDF vectorizer used for the anime data.
     :param knn_model: The k-NN model for finding similar animes.
-    :param top_n: Number of recommendations to return (default is 10).
+    :param top_n: Number of recommendations to return (default is 5).
     :return: DataFrame containing the top recommended anime titles.
     :rtype: pd.DataFrame
     """
     query_processed = preprocess_text(query)
     query_tfidf = tfidf_vectorizer.transform([query_processed])
-    distances, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n)
-    return data.iloc[indices[0]][['title', 'genres','synopsis','studio','demographic','source']]
-
+    distances, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n + 5)
+    recommendations = data.iloc[indices[0]][['title', 'genres', 'synopsis', 'studio', 'demographic', 'source']]
+    
+    filtered_recommendations = recommendations[~recommendations['title'].str.contains(query, case=False, na=False)]
+    if filtered_recommendations.empty:
+        filtered_recommendations = recommendations[~recommendations['title'].str.contains(query, case=False, na=False)]
+        
+    return filtered_recommendations.head(top_n)
+        
 def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFrame:
     """
     Full pipeline to process data, build the k-NN model, and recommend animes based on the user query.
