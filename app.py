@@ -76,7 +76,7 @@ def recommend_anime_knn(
     query_processed = preprocess_text(query)
     query_tfidf = tfidf_vectorizer.transform([query_processed])
     distances, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n)
-    return data.iloc[indices[0]][['title', 'genres']]
+    return data.iloc[indices[0]][['title', 'genres','synopsis','studio','demographic','source']]
 
 def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFrame:
     """
@@ -93,50 +93,9 @@ def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFra
     return recommended_animes
 
 # Streamlit app
-st.set_page_config(page_title="Anime Recommendation System", layout="wide")
-
-# Custom CSS for background and text styling
-st.markdown(
-    """
-    <style>
-    .main {
-        background-color: #000000;
-        padding: 20px;
-        border-radius: 10px;
-    }
-    .stApp {
-        background: url(r"data\raw\anime.jpg");
-        background-size: cover;
-    }
-    .stSidebar {
-        background-color: #f8f8f8;
-    }
-    h1 {
-        color: #3a3a3a;
-        font-family: 'Helvetica', sans-serif;
-    }
-    .recommendation-title {
-        font-size: 20px;
-        color: #ff6f61;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+st.set_page_config(page_title="Anime Recommendation System")
 
 st.title("Anime Recommendation System")
-
-# Add a logo to the sidebar
-st.sidebar.image(r"data\raw\animate.png", use_column_width=True)
-
-st.sidebar.header("About")
-st.sidebar.info(
-    """
-    This app recommends anime titles based on a k-NN model.
-    Enter your favorite anime title or a brief description,
-    and the system will suggest similar anime for you to enjoy!
-    """
-)
 
 # User Input
 user_query = st.text_input("Enter an anime title or description to get recommendations:")
@@ -147,9 +106,11 @@ if user_query:
     # Run the recommendation pipeline
     recommended_animes = anime_recommendation_pipeline(user_query)
     
-    # Display the results in a better UI format
-    cols = st.columns(len(recommended_animes))
+    # Display the results
     for index, row in recommended_animes.iterrows():
-        with cols[index]:
-            st.write(f"<div class='recommendation-title'><strong>Title:</strong> {row['title']}</div>", unsafe_allow_html=True)
-            st.write(f"**Genres:** {row['genres']}")
+        with st.expander(f"**{row['title']}**"):
+            # Display only non-NaN fields
+            for column in ['genres', 'synopsis', 'studio', 'demographic', 'source']:
+                value = row[column]
+                if pd.notna(value):
+                    st.write(f"**{column.replace('_', ' ').title()}:** {value}")
