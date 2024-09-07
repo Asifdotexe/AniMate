@@ -101,6 +101,9 @@ def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFra
 
 # Code for streamlit app begins here
 st.set_page_config(page_title="Anime Recommendation System")
+    
+with open('styles.css') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 st.title("Anime Recommendation System")
 
