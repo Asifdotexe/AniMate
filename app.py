@@ -99,25 +99,26 @@ def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFra
     recommended_animes = recommend_anime_knn(user_query, tfidf_vectorizer, knn_model, top_n)
     return recommended_animes
 
-# Streamlit app
+# Code for streamlit app begins here
 st.set_page_config(page_title="Anime Recommendation System")
 
 st.title("Anime Recommendation System")
 
-# User Input
-user_query = st.text_input("Enter an anime title or description to get recommendations:")
+query, number = st.columns([4, 1])
+with query:
+    user_query = st.text_input("Enter an anime title or description:")
+with number:
+    num_recommendations = st.number_input("No. of results:", min_value=1, max_value=20, value=5)
 
-if user_query:
-    st.write("### Recommendations based on your input:")
-    
-    # Run the recommendation pipeline
-    recommended_animes = anime_recommendation_pipeline(user_query)
-    
-    # Display the results
-    for index, row in recommended_animes.iterrows():
-        with st.expander(f"**{row['title']}**"):
-            # Display only non-NaN fields
-            for column in ['genres', 'synopsis', 'studio', 'demographic', 'source']:
-                value = row[column]
-                if pd.notna(value):
-                    st.write(f"**{column.replace('_', ' ').title()}:** {value}")
+if st.button("Get Recommendations"):
+    if user_query:
+        st.write("### Recommendations based on your input:")
+        
+        recommended_animes = anime_recommendation_pipeline(user_query, num_recommendations)
+
+        for index, row in recommended_animes.iterrows():
+            with st.expander(f"**{row['title']}**"):
+                for column in ['genres', 'synopsis', 'studio', 'demographic', 'source']:
+                    value = row[column]
+                    if pd.notna(value):
+                        st.write(f"**{column.replace('_', ' ').title()}:** {value}")
