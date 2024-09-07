@@ -99,9 +99,9 @@ def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFra
     recommended_animes = recommend_anime_knn(user_query, tfidf_vectorizer, knn_model, top_n)
     return recommended_animes
 
-# Code for streamlit app begins here
+# Code for Streamlit app begins here
 st.set_page_config(page_title="Anime Recommendation System")
-    
+
 with open('styles.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
@@ -114,14 +114,19 @@ with number:
     num_recommendations = st.number_input("No. of results:", min_value=1, max_value=20, value=5)
 
 if st.button("Get Recommendations"):
-    if user_query:
+    if user_query.strip():  # Check if the query is not just empty or whitespace
         st.write("### Recommendations based on your input:")
-        
+
         recommended_animes = anime_recommendation_pipeline(user_query, num_recommendations)
 
-        for index, row in recommended_animes.iterrows():
-            with st.expander(f"**{row['title']}**"):
-                for column in ['genres', 'synopsis', 'studio', 'demographic', 'source']:
-                    value = row[column]
-                    if pd.notna(value):
-                        st.write(f"**{column.replace('_', ' ').title()}:** {value}")
+        if recommended_animes.empty:
+            st.warning("No recommendations found. Please try a different query.")
+        else:
+            for index, row in recommended_animes.iterrows():
+                with st.expander(f"**{row['title']}**"):
+                    for column in ['genres', 'synopsis', 'studio', 'demographic', 'source']:
+                        value = row[column]
+                        if pd.notna(value):
+                            st.write(f"**{column.replace('_', ' ').title()}:** {value}")
+    else:
+        st.warning("Please enter a valid query to get recommendations.")

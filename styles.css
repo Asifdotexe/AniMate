@@ -1,21 +1,13 @@
 /* styles.css */
-.stButton button {
-    background-color: #f0f0f0; /* Default background color */
-    color: black;
-    border: 1px solid #ccc; /* Border color */
-    border-radius: 5px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
-}
 
+/* Style for button hover */
 .stButton button:hover {
     background-color: #28a745; /* Green color on hover */
     color: white; /* Text color on hover */
     border: 1px solid #218838; /* Darker green border on hover */
 }
 
+/* Style for text input and number input */
 .stTextInput, .stNumberInput {
     display: inline-block;
     margin-right: 10px;
