@@ -1,10 +1,18 @@
 myenv/
+<<<<<<< HEAD
+
+=======
+>>>>>>> 3-develop
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+<<<<<<< HEAD
+.cfg
+=======
 myenv/
 
+>>>>>>> 3-develop
 # C extensions
 *.so
 
