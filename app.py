@@ -6,7 +6,7 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 
 stemmer = PorterStemmer()
-data = pd.read_csv(r'data\final\processed_data_02092024.csv')
+data = pd.read_csv(r'..\data\final\processed_data_02092024.csv')
 stop_words = set([
     'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 'yourself', 'yourselves',
     'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their',
