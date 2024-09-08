@@ -106,6 +106,7 @@ with open('styles.css') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 st.title("Anime Recommendation System")
+st.caption("AniMate is a Python-based anime recommendation system that utilizes natural language processing (NLP) to suggest anime based on user preferences")
 
 query, number = st.columns([4, 1])
 with query:
@@ -117,7 +118,8 @@ if st.button("Get Recommendations"):
     if user_query.strip():  # Check if the query is not just empty or whitespace
         st.write("### Recommendations based on your input:")
 
-        recommended_animes = anime_recommendation_pipeline(user_query, num_recommendations)
+        with st.spinner('Generating recommendations...'):  # Spinner shows while waiting for results
+            recommended_animes = anime_recommendation_pipeline(user_query, num_recommendations)
 
         if recommended_animes.empty:
             st.warning("No recommendations found. Please try a different query.")
