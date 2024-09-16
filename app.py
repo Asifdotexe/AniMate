@@ -34,7 +34,7 @@ def vectorize(df: pd.DataFrame) -> tuple[pd.DataFrame, TfidfVectorizer]:
     :rtype: tuple
     """
     tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_features=5000)
-    tfidf_matrix = tfidf_vectorizer.fit_transform(df['combined_text'])
+    tfidf_matrix = tfidf_vectorizer.fit_transform(df['synopsis_processed'])
     tfidf_df = pd.DataFrame(tfidf_matrix.toarray(), columns=tfidf_vectorizer.get_feature_names_out())
     return tfidf_df, tfidf_vectorizer
 
