@@ -1,4 +1,5 @@
 import nltk
+import random
 import streamlit as st
 import pandas as pd
 from nltk.corpus import stopwords
@@ -113,6 +114,17 @@ with open('styles.css') as f:
 st.title("AniMate")
 st.caption("AniMate is a Python-based anime recommendation system that utilizes natural language processing (NLP) to suggest anime based on user preferences")
 
+loading_phrases = [
+    "🔍 Searching for hidden gems in the anime universe...",
+    "✨ Summoning the perfect anime recommendations...",
+    "🎉 Gathering the coolest anime just for you...",
+    "📚 Digging through the anime archives for you...",
+    "🚀 Launching into the world of anime to find your match...",
+    "🌟 Fetching the ultimate anime experience...",
+    "🌀 Sifting through dimensions for the best recommendations...",
+    "💫 Scouring the anime cosmos for your next favorite..."
+]
+
 query, number = st.columns([4, 1])
 with query:
     user_query = st.text_input("Describe a plot! Let's see if we can find something that matches that.")
@@ -123,7 +135,7 @@ if st.button("Get Recommendations"):
     if user_query.strip():  # Check if the query is not just empty or whitespace
         st.write("### Recommendations based on your input:")
 
-        with st.spinner('Generating recommendations...'):  # Spinner shows while waiting for results
+        with st.spinner(random.choice(loading_phrases)):  # Randomly select a loading phrase
             recommended_animes = anime_recommendation_pipeline(user_query, num_recommendations)
 
         if recommended_animes.empty:
