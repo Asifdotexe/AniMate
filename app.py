@@ -10,16 +10,21 @@ from sklearn.neighbors import NearestNeighbors
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 
-# Download necessary NLTK resources
+
 nltk.download('stopwords')
 nltk.download('punkt_tab')
 
-# Initialize the stemmer
 stemmer = PorterStemmer()
 
 # Cache data loading and optimize dtypes
 @st.cache_data
-def load_data():
+def load_data() -> pd.DataFrame:
+    """
+    Load anime data from a CSV file and optimize data types.
+
+    :returns: A DataFrame containing the anime data with optimized dtypes.
+    :rtype: pd.DataFrame
+    """
     dtypes = {
         'title': 'category',
         'other_name': 'category',
@@ -35,11 +40,17 @@ def load_data():
     }
     return pd.read_csv('data/final/AnimeData_25092024.csv', usecols=dtypes.keys(), dtype=dtypes)
 
-# Stop words for preprocessing
 stop_words = set(stopwords.words('english'))
 
-# Preprocess text: tokenize, remove stopwords, and apply stemming
 def preprocess_text(text: str) -> str:
+    """
+    Preprocess the input text by tokenizing, stemming, and removing stopwords.
+    
+    :param text: The input text to preprocess.
+
+    :returns: The processed text as a single string after tokenization, stemming, and stopword removal.
+    :rtype: str
+    """
     tokens = word_tokenize(text.lower())
     processed = [stemmer.stem(word) for word in tokens if word.isalpha() and word not in stop_words]
     return ' '.join(processed)
@@ -47,6 +58,14 @@ def preprocess_text(text: str) -> str:
 # Cache the TF-IDF vectorization and k-NN model to avoid recomputation
 @st.cache_resource
 def vectorize_and_build_model(df: pd.DataFrame) -> tuple[NearestNeighbors, TfidfVectorizer]:
+    """
+    Vectorize the synopsis of the anime DataFrame and build a k-NN model.
+
+    :param df: The DataFrame containing anime data.
+    
+    :return: A tuple containing the k-NN model and the TF-IDF vectorizer.
+    :rtype: tuple
+    """
     df['stemmed_synopsis'] = df['synopsis'].apply(lambda x: preprocess_text(x) if pd.notna(x) else '')
     tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_features=5000)
     tfidf_matrix = tfidf_vectorizer.fit_transform(df['stemmed_synopsis'])
@@ -55,6 +74,17 @@ def vectorize_and_build_model(df: pd.DataFrame) -> tuple[NearestNeighbors, Tfidf
 
 # Recommend anime using the k-NN model and TF-IDF vectorizer
 def recommend_anime_knn(query: str, tfidf_vectorizer: TfidfVectorizer, knn_model: NearestNeighbors, top_n: int = 5) -> pd.DataFrame:
+    """
+    Recommend anime based on a user query using the k-NN model and TF-IDF vectorization.
+
+    :param query: The user input query describing the desired anime.
+    :param tfidf_vectorizer: The fitted TF-IDF vectorizer.
+    :param knn_model: The fitted k-NN model.
+    :param top_n: The number of recommendations to return.
+
+    :return: A DataFrame containing the recommended anime titles and their attributes.
+    :rtype: pd.DataFrame
+    """
     query_processed = preprocess_text(query)
     query_tfidf = tfidf_vectorizer.transform([query_processed])
     distances, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n + 5)
@@ -69,6 +99,15 @@ def recommend_anime_knn(query: str, tfidf_vectorizer: TfidfVectorizer, knn_model
 
 # Full pipeline to get recommendations
 def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFrame:
+    """
+    Execute the full pipeline to recommend anime based on user input.
+
+    :param user_query: The user input query describing the desired anime.
+    :param top_n: The number of recommendations to return.
+
+    :returns: A DataFrame containing the sorted recommended anime titles based on their score.
+    :rtype: pd.DataFrame
+    """
     knn_model, tfidf_vectorizer = vectorize_and_build_model(data)
     recommended_animes = recommend_anime_knn(user_query, tfidf_vectorizer, knn_model, top_n)
     recommended_titles = recommended_animes['title']
@@ -81,10 +120,14 @@ def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFra
     return recommendations
 
 # Monitor memory usage
-def monitor_memory():
+def monitor_memory() -> None:
+    """
+    Monitor and display the current memory usage.
+    :rtype: None
+    """
     st.write(f"Memory usage: {psutil.virtual_memory().percent}%")
     gc.collect()
-
+    
 # Streamlit app
 st.set_page_config(page_title="AniMate")
 
