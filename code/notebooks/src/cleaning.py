@@ -111,26 +111,14 @@ def nlp_preprocessing(text, method='lemmatize'):
     processed_text = ' '.join(tokens)
     return processed_text
 
-def remove_mature_content(text):
-    """
-    Remove specific words related to mature content from the input text.
-
-    Parameters:
-    text (str): The input text from which to remove mature content words.
-
-    Returns:
-    str: The text with mature content words removed.
-    """
-    if not isinstance(text, str):
-        return text  # Return the original text if it's not a string
-    
+# Define a function to filter out rows with mature content in genres
+def filter_mature_content(df: pd.DataFrame, column: str) -> pd.DataFrame:
     mature_words = ['hentai', 'ecchi', 'erotica', 'mature']
-    
-    # Split the text by commas, remove the mature words, and join back
-    cleaned_text = ", ".join([word.strip() for word in text.split(',') if word.strip().lower() not in mature_words])
-    
-    return cleaned_text
-
+    # Create a regex pattern to match any of the mature words
+    pattern = '|'.join(mature_words)  # Join the words with '|' to create an OR condition
+    # Filter the DataFrame to exclude rows that contain any mature words in the specified column
+    filtered_df = df[~df[column].str.contains(pattern, case=False, na=False)]
+    return filtered_df
 
 def lemmatize_with_pos(tokens):
     """
