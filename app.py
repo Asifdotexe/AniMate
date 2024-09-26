@@ -12,7 +12,7 @@ from nltk.stem import PorterStemmer
 
 # Download necessary NLTK resources
 nltk.download('stopwords')
-nltk.download('punkt')
+nltk.download('punkt_tab')
 
 # Initialize the stemmer
 stemmer = PorterStemmer()
