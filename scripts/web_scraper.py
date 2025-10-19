@@ -46,10 +46,14 @@ def safe_float(element, default: str = "N.A") -> float | str:
 def _get_basic_info(soup: BeautifulSoup) -> dict:
     """Extracts title, year, and synopsis."""
     start_date_text = safe_text(soup.find("span", class_="js-start_date"))
+    title_h2 = soup.find("h2", class_="h2_anime_title")
+    title_a = title_h2.find("a") if title_h2 else None
+    synopsis_div = soup.find("div", class_="synopsis js-synopsis")
+    synopsis_p = synopsis_div.p if synopsis_div else None
     return {
-        "Title": safe_text(soup.find("h2", class_="h2_anime_title").find("a")),
+        "Title": safe_text(title_a),
         "Release Year": start_date_text[:4] if start_date_text != "N/A" else "N/A",
-        "Synopsis": safe_text(soup.find("div", class_="synopsis js-synopsis").p),
+        "Synopsis": safe_text(synopsis_p),
     }
 
 
@@ -60,9 +64,15 @@ def _get_episode_info(info_div: BeautifulSoup) -> dict:
 
     eps_text = info_div.get_text()
     match = re.search(r"(\d+)\s*eps", eps_text)
+    # class_=["item finished", "item airing"] looks for a single class string;
+    # MAL uses multiple classes. Match by tokens or CSS selectors.
+    status_el = (
+        info_div.select_one("span.item.finished")
+        or info_div.select_one("span.item.airing")
+    )
     return {
         "Episodes": match.group(1) if match else "N/A",
-        "Status": safe_text(info_div.find("span", class_=["item finished", "item airing"])),
+        "Status": safe_text(status_el),
     }
 
 
