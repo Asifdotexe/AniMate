@@ -18,6 +18,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm
 
+from animate.config import FINAL_DATA_PATH
+
 # Download necessary NLTK data
 try:
     stopwords.words("english")
@@ -60,7 +62,7 @@ def load_data() -> pd.DataFrame:
     }
     # Corrected the file path to be relative to the app.py location
     return pd.read_csv(
-        "data/final/AnimeData_25092024.csv", usecols=dtypes.keys(), dtype=dtypes
+        FINAL_DATA_PATH, usecols=dtypes.keys(), dtype=dtypes
     )
 
 

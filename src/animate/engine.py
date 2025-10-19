@@ -93,10 +93,10 @@ class RecommendationEngine:
         # Find the nearest neighbors
         _, indices = self.knn_model.kneighbors(query_vector, n_neighbors=top_n + 5)
 
-        # Filter and return recommendations 
+        # Filter and return recommendations
         recommendations = self.data.iloc[indices[0]]
         filtered_recs = recommendations[
-            ~recommendations["title"].str.contains(query, case=False, na=False)
+            ~recommendations["title"].str.contains(query, case=False, na=False, regex=False)
         ]
 
         if filtered_recs.empty:
