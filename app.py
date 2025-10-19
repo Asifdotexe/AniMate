@@ -12,6 +12,7 @@ import nltk
 import pandas as pd
 import psutil
 import streamlit as st
+from tqdm import tqdm
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
@@ -24,6 +25,9 @@ nltk.download("punkt")
 
 stemmer = PorterStemmer()
 
+# Allows us to have progress bar for pandas .apply()
+tqdm.pandas()
+
 
 # Cache data loading and optimize dtypes
 @st.cache_data
@@ -32,7 +36,6 @@ def load_data() -> pd.DataFrame:
     Load anime data from a CSV file and optimize data types.
 
     :returns: A DataFrame containing the anime data with optimized dtypes.
-    :rtype: pd.DataFrame
     """
     dtypes = {
         "title": "category",
