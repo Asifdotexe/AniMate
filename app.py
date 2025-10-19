@@ -19,8 +19,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 
 # Download necessary NLTK data
-nltk.download("stopwords")
-nltk.download("punkt")
+try:
+    stopwords.words("english")
+except LookupError:
+    nltk.download("stopwords", quiet=True)
+
+try:
+    word_tokenize("test")
+except LookupError:
+    nltk.download("punkt", quiet=True)
 
 # Reason to pick Snowball over PorterStemer:
 # https://stackoverflow.com/questions/10554052/what-are-the-major-differences-and-benefits-of-porter-and-lancaster-stemming-alg
