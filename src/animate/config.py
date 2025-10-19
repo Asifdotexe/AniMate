@@ -26,7 +26,7 @@ def _latest_final_csv() -> Path:
         key=lambda p: p.stat().st_mtime,
         reverse=True,
     )
-    return files[0] if files else FINAL_DATA_DIR / "anime_dump_25072024.csv"
+    return files[0] if files else FINAL_DATA_DIR / "anime_dump_25092024.csv"
 
 
 FINAL_DATA_PATH = Path(os.getenv("ANIMATE_FINAL_DATA_PATH", _latest_final_csv()))

@@ -140,6 +140,7 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
                     all_data.append(scrape_anime_data(str(anime_item)))
 
                 consecutive_404s = 0  # Reset on success
+                time.sleep(1)
                 break
             except requests.HTTPError as e:
                 if e.response.status_code == 404:
@@ -147,6 +148,8 @@ def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int
                     if consecutive_404s >= 3:
                         print(f"Stopping {url} after 3 consecutive 404s.")
                         return all_data
+                    print(f"Page {page_url} not found (404). Skipping.")
+                    break  # Don't retry 404s
                 print(f"HTTP Error on {page_url}: {e}. Retrying in {delay}s...")
                 time.sleep(delay)
             except requests.RequestException as e:
