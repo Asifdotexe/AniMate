@@ -3,7 +3,6 @@ This module contains the streamlit application logic for AniMate
 """
 
 import cProfile
-import gc
 import io
 import pstats
 import random
@@ -11,12 +10,12 @@ import random
 import nltk
 import pandas as pd
 import streamlit as st
-from tqdm import tqdm
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
+from tqdm import tqdm
 
 # Download necessary NLTK data
 try:
@@ -76,7 +75,11 @@ def stemming_tokenizer(text: str) -> list[str]:
     :return: A list of processed (stemmed) tokens.
     """
     tokens = word_tokenize(text.lower())
-    return [stemmer.stem(word) for word in tokens if word.isalpha() and word not in stop_words]
+    return [
+        stemmer.stem(word)
+        for word in tokens
+        if word.isalpha() and word not in stop_words
+    ]
 
 
 def preprocess_query_text(text: str) -> str:
@@ -87,7 +90,7 @@ def preprocess_query_text(text: str) -> str:
     :param text: Ingests user's query
     :returns: Processed query
     """
-    return ' '.join(stemming_tokenizer(text))
+    return " ".join(stemming_tokenizer(text))
 
 
 # Cache the TF-IDF vectorization and k-NN model to avoid recomputation
@@ -102,21 +105,21 @@ def vectorize_and_build_model(
     :param df: The DataFrame containing anime data.
     :return: A tuple containing the k-NN model and the TF-IDF vectorizer.
     """
-    tfidf_vectorizer = TfidfVectorizer(
-        analyzer=stemming_tokenizer,
-        max_features=5000
-    )
+    tfidf_vectorizer = TfidfVectorizer(analyzer=stemming_tokenizer, max_features=5000)
 
-    with st.spinner("Processing thousands of anime synopses... this might take a moment."):
-        tfidf_matrix = tfidf_vectorizer.fit_transform(df['synopsis'].fillna(''))
+    with st.spinner(
+        "Processing thousands of anime synopses... this might take a moment."
+    ):
+        tfidf_matrix = tfidf_vectorizer.fit_transform(df["synopsis"].fillna(""))
 
-    knn_model = NearestNeighbors(n_neighbors=5, metric='cosine').fit(tfidf_matrix)
+    knn_model = NearestNeighbors(n_neighbors=5, metric="cosine").fit(tfidf_matrix)
     return knn_model, tfidf_vectorizer
 
 
 # Recommend anime using the k-NN model and TF-IDF vectorizer
 def recommend_anime_knn(
     query: str,
+    df: pd.DataFrame,
     tfidf_vectorizer: TfidfVectorizer,
     knn_model: NearestNeighbors,
     top_n: int = 5,
@@ -125,6 +128,7 @@ def recommend_anime_knn(
     Recommend anime based on a user query using the k-NN model and TF-IDF vectorization.
 
     :param query: The user input query describing the desired anime.
+    :param df: The DataFrame containing anime data.
     :param tfidf_vectorizer: The fitted TF-IDF vectorizer.
     :param knn_model: The fitted k-NN model.
     :param top_n: The number of recommendations to return.
@@ -135,8 +139,10 @@ def recommend_anime_knn(
     query_tfidf = tfidf_vectorizer.transform([query_processed])
     _, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n + 5)
 
-    recommendations = data.iloc[indices[0]]
-    filtered_recommendations = recommendations[~recommendations['title'].str.contains(query, case=False, na=False)]
+    recommendations = df.iloc[indices[0]]
+    filtered_recommendations = recommendations[
+        ~recommendations["title"].str.contains(query, case=False, na=False)
+    ]
 
     if filtered_recommendations.empty:
         filtered_recommendations = recommendations
@@ -154,10 +160,9 @@ def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFra
     """
     knn_model, tfidf_vectorizer = vectorize_and_build_model(data)
     anime_recommendations = recommend_anime_knn(
-        user_query, tfidf_vectorizer, knn_model, top_n
+        user_query, data, tfidf_vectorizer, knn_model, top_n
     )
-    final_recommendations = data.loc[data['title'].isin(anime_recommendations['title'])]
-    return final_recommendations.sort_values(by='score', ascending=False)
+    return anime_recommendations.sort_values(by="score", ascending=False)
 
 
 # Streamlit app
