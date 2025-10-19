@@ -30,3 +30,5 @@ isort = "^7.0.0"
 black = "^25.9.0"
 pylint = "^4.0.1"
 
+[tool.pylint.format]
+max-line-length = 120
