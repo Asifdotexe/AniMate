@@ -68,13 +68,12 @@ def preprocess_text(text: str) -> str:
     :returns: The processed text as a single string after tokenization, stemming, and stopword removal.
     :rtype: str
     """
+    if pd.isna(text):
+        return ""
+
     tokens = word_tokenize(text.lower())
-    processed = [
-        stemmer.stem(word)
-        for word in tokens
-        if word.isalpha() and word not in stop_words
-    ]
-    return " ".join(processed)
+    processed_tokens = [stemmer.stem(word) for word in tokens if word.isalpha() and word not in stop_words]
+    return ' '.join(processed_tokens)
 
 
 # Cache the TF-IDF vectorization and k-NN model to avoid recomputation
