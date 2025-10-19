@@ -27,7 +27,7 @@ def safe_text(element, default: str = "N/A") -> str:
     return element.text.strip() if element else default
 
 
-def safe_int(element, default: str = "N.A") -> int | str:
+def safe_int(element, default: str = "N/A") -> int | str:
     """Safely extracts an integer from a BeautifulSoup element."""
     try:
         return int(element.text.strip().replace(",", "")) if element else default
@@ -35,7 +35,7 @@ def safe_int(element, default: str = "N.A") -> int | str:
         return default
 
 
-def safe_float(element, default: str = "N.A") -> float | str:
+def safe_float(element, default: str = "N/A") -> float | str:
     """Safely extracts a float from a BeautifulSoup element."""
     try:
         return float(element.text.strip()) if element else default
