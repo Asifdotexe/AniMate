@@ -14,7 +14,7 @@ import psutil
 import streamlit as st
 from tqdm import tqdm
 from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
+from nltk.stem.snowball import SnowballStemmer
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
@@ -23,7 +23,7 @@ from sklearn.neighbors import NearestNeighbors
 nltk.download("stopwords")
 nltk.download("punkt")
 
-stemmer = PorterStemmer()
+stemmer = SnowballStemmer("english")
 
 # Allows us to have progress bar for pandas .apply()
 tqdm.pandas()
