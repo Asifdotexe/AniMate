@@ -1,5 +1,6 @@
 """
-This module contains the streamlit application logic for AniMate
+This module contains the Streamlit UI and application logic for AniMate.
+It acts as the main entry point for the web app.
 """
 
 import cProfile
