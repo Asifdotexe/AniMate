@@ -10,7 +10,6 @@ import random
 
 import nltk
 import pandas as pd
-import psutil
 import streamlit as st
 from tqdm import tqdm
 from nltk.corpus import stopwords
@@ -23,6 +22,8 @@ from sklearn.neighbors import NearestNeighbors
 nltk.download("stopwords")
 nltk.download("punkt")
 
+# Reason to pick Snowball over PorterStemer:
+# https://stackoverflow.com/questions/10554052/what-are-the-major-differences-and-benefits-of-porter-and-lancaster-stemming-alg
 stemmer = SnowballStemmer("english")
 
 # Allows us to have progress bar for pandas .apply()
@@ -59,21 +60,27 @@ def load_data() -> pd.DataFrame:
 stop_words = set(stopwords.words("english"))
 
 
-def preprocess_text(text: str) -> str:
+def stemming_tokenizer(text: str) -> list[str]:
     """
-    Preprocess the input text by tokenizing, stemming, and removing stopwords.
+    A custom tokenizer that tokenizes, removes stopwords, and stems the text.
+    This will be passed to TfidfVectorizer.
 
-    :param text: The input text to preprocess.
-
-    :returns: The processed text as a single string after tokenization, stemming, and stopword removal.
-    :rtype: str
+    :param text: The input text to process.
+    :return: A list of processed (stemmed) tokens.
     """
-    if pd.isna(text):
-        return ""
-
     tokens = word_tokenize(text.lower())
-    processed_tokens = [stemmer.stem(word) for word in tokens if word.isalpha() and word not in stop_words]
-    return ' '.join(processed_tokens)
+    return [stemmer.stem(word) for word in tokens if word.isalpha() and word not in stop_words]
+
+
+def preprocess_query_text(text: str) -> str:
+    """
+    Preprocess the user's query text. This is separate from the main
+    vectorizer's analyzer to handle single string inputs efficiently.
+
+    :param text: Ingests user's query
+    :returns: Processed query
+    """
+    return ' '.join(stemming_tokenizer(text))
 
 
 # Cache the TF-IDF vectorization and k-NN model to avoid recomputation
@@ -83,18 +90,20 @@ def vectorize_and_build_model(
 ) -> tuple[NearestNeighbors, TfidfVectorizer]:
     """
     Vectorize the synopsis of the anime DataFrame and build a k-NN model.
+    This is now highly optimized to preprocess text inside the vectorizer.
 
     :param df: The DataFrame containing anime data.
-
     :return: A tuple containing the k-NN model and the TF-IDF vectorizer.
-    :rtype: tuple
     """
-    df["stemmed_synopsis"] = df["synopsis"].apply(
-        lambda x: preprocess_text(x) if pd.notna(x) else ""
+    tfidf_vectorizer = TfidfVectorizer(
+        analyzer=stemming_tokenizer,
+        max_features=5000
     )
-    tfidf_vectorizer = TfidfVectorizer(stop_words="english", max_features=5000)
-    tfidf_matrix = tfidf_vectorizer.fit_transform(df["stemmed_synopsis"])
-    knn_model = NearestNeighbors(n_neighbors=5, metric="cosine").fit(tfidf_matrix)
+
+    with st.spinner("Processing thousands of anime synopses... this might take a moment."):
+        tfidf_matrix = tfidf_vectorizer.fit_transform(df['synopsis'].fillna(''))
+
+    knn_model = NearestNeighbors(n_neighbors=5, metric='cosine').fit(tfidf_matrix)
     return knn_model, tfidf_vectorizer
 
 
@@ -114,29 +123,13 @@ def recommend_anime_knn(
     :param top_n: The number of recommendations to return.
 
     :return: A DataFrame containing the recommended anime titles and their attributes.
-    :rtype: pd.DataFrame
     """
-    query_processed = preprocess_text(query)
+    query_processed = preprocess_query_text(query)
     query_tfidf = tfidf_vectorizer.transform([query_processed])
     _, indices = knn_model.kneighbors(query_tfidf, n_neighbors=top_n + 5)
 
-    recommendations = data.iloc[indices[0]][
-        [
-            "title",
-            "other_name",
-            "genres",
-            "synopsis",
-            "studio",
-            "demographic",
-            "source",
-            "duration_category",
-            "total_duration_hours",
-            "score",
-        ]
-    ]
-    filtered_recommendations = recommendations[
-        ~recommendations["title"].str.contains(query, case=False, na=False)
-    ]
+    recommendations = data.iloc[indices[0]]
+    filtered_recommendations = recommendations[~recommendations['title'].str.contains(query, case=False, na=False)]
 
     if filtered_recommendations.empty:
         filtered_recommendations = recommendations
@@ -150,39 +143,18 @@ def anime_recommendation_pipeline(user_query: str, top_n: int = 5) -> pd.DataFra
     Execute the full pipeline to recommend anime based on user input.
 
     :param user_query: The user input query describing the desired anime.
-    :param top_n: The number of recommendations to return.
-
     :returns: A DataFrame containing the sorted recommended anime titles based on their score.
-    :rtype: pd.DataFrame
     """
     knn_model, tfidf_vectorizer = vectorize_and_build_model(data)
     anime_recommendations = recommend_anime_knn(
         user_query, tfidf_vectorizer, knn_model, top_n
     )
-    recommended_titles = anime_recommendations["title"]
-    recommendations = data.loc[data["title"].isin(recommended_titles)].sort_values(
-        by="score", ascending=False
-    )
-
-    # Free memory after processing
-    del anime_recommendations
-    gc.collect()
-
-    return recommendations
-
-
-# Monitor memory usage
-def monitor_memory() -> None:
-    """
-    Monitor and display the current memory usage.
-    :rtype: None
-    """
-    st.write(f"Memory usage: {psutil.virtual_memory().percent}%")
-    gc.collect()
+    final_recommendations = data.loc[data['title'].isin(anime_recommendations['title'])]
+    return final_recommendations.sort_values(by='score', ascending=False)
 
 
 # Streamlit app
-st.set_page_config(page_title="AniMate")
+st.set_page_config(page_title="AniMate", layout="wide")
 
 # Load custom styles
 try:
@@ -230,8 +202,6 @@ if st.session_state.page == "landing":
         st.session_state.page = "recommendations"
         st.rerun()  # Use rerun to immediately switch pages
 
-    monitor_memory()
-
     st.subheader("Contributors")
     contributors = [
         {
@@ -262,7 +232,7 @@ if st.session_state.page == "landing":
     ]
 
     cols = st.columns(len(contributors))
-    for col, contributor in zip(cols, contributors):
+    for col, contributor in zip(cols, contributors, strict=True):
         with col:
             st.markdown(
                 f"[![Contributor Icon]({contributor['image']})]({contributor['github']})"
@@ -276,8 +246,6 @@ else:
         """AniMate is a Python-based anime recommendation system that utilizes natural language processing (NLP)
         to suggest anime based on user preferences"""
     )
-
-    monitor_memory()
 
     query_section, number = st.columns([4, 1])
     with query_section:
