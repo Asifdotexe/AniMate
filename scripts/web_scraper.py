@@ -139,35 +139,36 @@ def fetch_and_scrape(
     Fetches and scrapes anime data for a single genre URL using a shared session.
     """
     all_data = []
-    for page in tqdm(range(1, page_limit + 1), desc="Pages", leave=False):
-        page_url = f"{url}?page={page}"
-        for _ in range(retries):
-            try:
-                response = session.get(page_url, timeout=REQUEST_TIMEOUT)
-                response.raise_for_status()
-                soup = BeautifulSoup(response.content, "lxml")
-                anime_list = soup.find_all("div", class_="js-anime-category-producer")
+    with requests.Session() as session:
+        for page in tqdm(range(1, page_limit + 1), desc="Pages", leave=False):
+            page_url = f"{url}?page={page}"
+            for _ in range(retries):
+                try:
+                    response = session.get(page_url, timeout=REQUEST_TIMEOUT)
+                    response.raise_for_status()
+                    soup = BeautifulSoup(response.content, "lxml")
+                    anime_list = soup.find_all("div", class_="js-anime-category-producer")
 
-                if not anime_list:
-                    return all_data
+                    if not anime_list:
+                        return all_data
 
-                for anime_item in anime_list:
-                    all_data.append(scrape_anime_data(str(anime_item)))
+                    for anime_item in anime_list:
+                        all_data.append(scrape_anime_data(str(anime_item)))
 
-                time.sleep(0.5) # A smaller sleep as we are already parallel
-                break
-            except requests.HTTPError as e:
-                if e.response.status_code == 404:
-                    return all_data # End of pages for this genre
-                print(f"HTTP Error on {page_url}: {e}. Retrying...")
-                time.sleep(delay)
-            except requests.RequestException as e:
-                print(f"Request Error on {page_url}: {e}. Retrying...")
-                time.sleep(delay)
-        else:
-            print(f"Failed to fetch {page_url} after {retries} retries. Skipping.")
-            continue
-    return all_data
+                    time.sleep(0.5) # A smaller sleep as we are already parallel
+                    break
+                except requests.HTTPError as e:
+                    if e.response.status_code == 404:
+                        return all_data # End of pages for this genre
+                    print(f"HTTP Error on {page_url}: {e}. Retrying...")
+                    time.sleep(delay)
+                except requests.RequestException as e:
+                    print(f"Request Error on {page_url}: {e}. Retrying...")
+                    time.sleep(delay)
+            else:
+                print(f"Failed to fetch {page_url} after {retries} retries. Skipping.")
+                continue
+        return all_data
 
 
 def save_data(data: list[dict], date_str: str) -> None:
