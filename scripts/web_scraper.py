@@ -11,16 +11,17 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from pathlib import Path
+from http import HTTPStatus
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 
-from animate.config import MYANIMELIST_BASE_URL
+from animate.config import MYANIMELIST_BASE_URL, RAW_DATA_DIR
 
-OUTPUT_DIR = Path(__file__).parent.parent / "data" / "raw"
 REQUEST_TIMEOUT = 10
 MAX_WORKERS = 10
 
@@ -140,6 +141,31 @@ def fetch_and_scrape(
     """
     all_data = []
     with requests.Session() as session:
+        retry = Retry(
+            total=retries,
+            connect=retries,
+            read=retries,
+            status=retries,
+            backoff_factor=1.5,
+            status_forcelist=[
+                HTTPStatus.TOO_MANY_REQUESTS,
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                HTTPStatus.BAD_GATEWAY,
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                HTTPStatus.GATEWAY_TIMEOUT,
+            ],
+            allowed_methods=["GET"],
+            raise_on_status=False
+        )
+        adapter = HTTPAdapter(max_retries=retry, pool_maxsize=MAX_WORKERS)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+
+        # Being a good citizen, hello MyAnimeList mods if you are seeing this!
+        session.headers.update({
+            "User-Agent": "AniMateScraper/2.0 (+https://github.com/Asifdotexe/AniMate)",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
         for page in tqdm(range(1, page_limit + 1), desc="Pages", leave=False):
             page_url = f"{url}?page={page}"
             for _ in range(retries):
@@ -155,10 +181,11 @@ def fetch_and_scrape(
                     for anime_item in anime_list:
                         all_data.append(scrape_anime_data(str(anime_item)))
 
-                    time.sleep(0.5) # A smaller sleep as we are already parallel
+                    # small jitter to avoid burst alignment across threads
+                    time.sleep(0.25 + 0.25 * (hash(page_url) % 7) / 7)
                     break
                 except requests.HTTPError as e:
-                    if e.response.status_code == 404:
+                    if e.response.status_code == HTTPStatus.NOT_FOUND:
                         return all_data # End of pages for this genre
                     print(f"HTTP Error on {page_url}: {e}. Retrying...")
                     time.sleep(delay)
@@ -178,8 +205,8 @@ def save_data(data: list[dict], date_str: str) -> None:
         return
 
     df = pd.DataFrame(data).drop_duplicates()
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    file_path = OUTPUT_DIR / f"anime_dump_{date_str}.csv"
+    RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    file_path = RAW_DATA_DIR / f"anime_dump_{date_str}.csv"
     df.to_csv(file_path, index=False)
     print(f"Data successfully saved to {file_path}")
 
