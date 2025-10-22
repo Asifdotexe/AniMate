@@ -18,7 +18,7 @@ import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-from src.animate.config import MYANIMELIST_BASE_URL
+from animate.config import MYANIMELIST_BASE_URL
 
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "raw"
 REQUEST_TIMEOUT = 10
@@ -131,10 +131,15 @@ def scrape_anime_data(anime_item_html: str) -> dict:
     }
     return anime_data
 
-def fetch_and_scrape(url: str, page_limit: int, retries: int = 3, delay: int = 5) -> list[dict]:
-    """Fetches and scrapes anime data from a given URL with multiple pages."""
+def fetch_and_scrape(
+    url: str, page_limit: int = 100, retries: int = 3, delay: int = 5
+) -> list[dict]:
+    """
+    Fetches and scrapes anime data from a given URL with multiple pages.
+    A 404 error is treated as the end of pages for a genre and stops scraping that genre.
+    Other errors are retried.
+    """
     all_data = []
-    consecutive_404s = 0
 
     for page in tqdm(range(1, page_limit + 1), desc="Pages", leave=False):
         page_url = f"{url}?page={page}"
@@ -145,27 +150,33 @@ def fetch_and_scrape(url: str, page_limit: int, retries: int = 3, delay: int = 5
                 soup = BeautifulSoup(response.content, "html.parser")
                 anime_list = soup.find_all("div", class_="js-anime-category-producer")
 
+                if not anime_list:
+                    # If the page is blank, it's the end of the genre.
+                    return all_data
+
                 for anime_item in anime_list:
                     all_data.append(scrape_anime_data(str(anime_item)))
 
-                consecutive_404s = 0  # Reset on success
-                time.sleep(1)
-                break
+                time.sleep(1)  # Be polite to the server
+                break  # Success, break the retry loop and go to the next page
+
             except requests.HTTPError as e:
+                # If a 404 error occurs, we assume we've reached the last page.
                 if e.response.status_code == 404:
-                    consecutive_404s += 1
-                    if consecutive_404s >= 3:
-                        print(f"Stopping {url} after 3 consecutive 404s.")
-                        return all_data
-                    print(f"Page {page_url} not found (404). Skipping.")
-                    break  # Don't retry 404s
+                    # This is the end of pages for this genre, so return what we have.
+                    return all_data
+
+                # For any other HTTP error (e.g., 500, 503), retry.
                 print(f"HTTP Error on {page_url}: {e}. Retrying in {delay}s...")
                 time.sleep(delay)
+
             except requests.RequestException as e:
+                # For connection errors, timeouts, etc., retry.
                 print(f"Request Error on {page_url}: {e}. Retrying in {delay}s...")
                 time.sleep(delay)
         else:
-            print(f"Failed to fetch {page_url} after {retries} retries. Skipping page.")
+            # This block executes if the retry loop completes without a `break`.
+            print(f"Failed to fetch {page_url} after {retries} retries. Skipping.")
             continue
 
     return all_data
@@ -178,7 +189,7 @@ def save_data(data: list[dict], date_str: str) -> None:
 
     df = pd.DataFrame(data).drop_duplicates()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    file_path = OUTPUT_DIR / f"AnimeData_{date_str}.csv"
+    file_path = OUTPUT_DIR / f"anime_dump_{date_str}.csv"
     df.to_csv(file_path, index=False)
     print(f"Data successfully saved to {file_path}")
 
@@ -190,11 +201,12 @@ def main():
         action='store_true',
         help="Enable profiling on the script to clock the efficiency"
     )
+    # Default to genre 1 if --profile is used without specific genres
     parser.add_argument(
         "--genres",
         nargs="+",
         type=int,
-        default=[1],  # Default to genre 1 if --profile is used without specific genres
+        default=[1],
         help="A list of genre IDs to scrape when profiling. Defaults to [1].",
     )
     args = parser.parse_args()
@@ -225,8 +237,7 @@ def main():
         _run_scraper(args.genres)
 
         profiler.disable()
-        print("\n--- SCRAPING COMPLETE ---")
-        print("\n--- PERFORMANCE PROFILE ---")
+        print("PERFORMANCE PROFILE:")
         s = io.StringIO()
         sortby = pstats.SortKey.CUMULATIVE
         ps = pstats.Stats(profiler, stream=s).sort_stats(sortby)
