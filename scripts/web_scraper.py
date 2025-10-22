@@ -6,10 +6,10 @@ It is intended to be run as a standalone script to generate the raw dataset.
 import argparse
 import cProfile
 import io
-import logging
 import pstats
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -22,8 +22,7 @@ from animate.config import MYANIMELIST_BASE_URL
 
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "raw"
 REQUEST_TIMEOUT = 10
-
-logger = logging.getLogger(__name__)
+MAX_WORKERS = 10
 
 
 def get_current_date() -> str:
@@ -134,53 +133,40 @@ def scrape_anime_data(anime_item_html: str) -> dict:
 
 
 def fetch_and_scrape(
-    url: str, page_limit: int = 100, retries: int = 3, delay: int = 5
+    session: requests.Session, url: str, page_limit: int = 100, retries: int = 3, delay: int = 5
 ) -> list[dict]:
     """
-    Fetches and scrapes anime data from a given URL with multiple pages.
-    A 404 error is treated as the end of pages for a genre and stops scraping that genre.
-    Other errors are retried.
+    Fetches and scrapes anime data for a single genre URL using a shared session.
     """
     all_data = []
-
     for page in tqdm(range(1, page_limit + 1), desc="Pages", leave=False):
         page_url = f"{url}?page={page}"
         for _ in range(retries):
             try:
-                response = requests.get(page_url, timeout=REQUEST_TIMEOUT)
+                response = session.get(page_url, timeout=REQUEST_TIMEOUT)
                 response.raise_for_status()
                 soup = BeautifulSoup(response.content, "html.parser")
                 anime_list = soup.find_all("div", class_="js-anime-category-producer")
 
                 if not anime_list:
-                    # If the page is blank, it's the end of the genre.
                     return all_data
 
                 for anime_item in anime_list:
                     all_data.append(scrape_anime_data(str(anime_item)))
 
-                time.sleep(1)  # Be polite to the server
-                break  # Success, break the retry loop and go to the next page
-
+                time.sleep(0.5) # A smaller sleep as we are already parallel
+                break
             except requests.HTTPError as e:
-                # If a 404 error occurs, we assume we've reached the last page.
                 if e.response.status_code == 404:
-                    # This is the end of pages for this genre, so return what we have.
-                    return all_data
-
-                # For any other HTTP error (e.g., 500, 503), retry.
-                print(f"HTTP Error on {page_url}: {e}. Retrying in {delay}s...")
+                    return all_data # End of pages for this genre
+                print(f"HTTP Error on {page_url}: {e}. Retrying...")
                 time.sleep(delay)
-
             except requests.RequestException as e:
-                # For connection errors, timeouts, etc., retry.
-                print(f"Request Error on {page_url}: {e}. Retrying in {delay}s...")
+                print(f"Request Error on {page_url}: {e}. Retrying...")
                 time.sleep(delay)
         else:
-            # This block executes if the retry loop completes without a `break`.
             print(f"Failed to fetch {page_url} after {retries} retries. Skipping.")
             continue
-
     return all_data
 
 
@@ -223,15 +209,34 @@ def main():
 
         :param genre_list: List containing the specific genres to scrape.
         """
-        logger.info("Scraping MyAnimeList")
-        url_list = [f"{MYANIMELIST_BASE_URL}{genre_id}/" for genre_id in genre_list]
-
+        url_list = [MYANIMELIST_BASE_URL + str(genre_id) + "/" for genre_id in genre_list]
         current_date = get_current_date()
         all_anime_data = []
 
-        for url in tqdm(url_list, desc="Scraping Genres"):
-            scraped_data = fetch_and_scrape(url, page_limit=100)
-            all_anime_data.extend(scraped_data)
+        with requests.Session() as session:
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                future_to_url = {
+                    executor.submit(fetch_and_scrape, session, url): url
+                    for url in url_list
+                }
+
+                for future in tqdm(
+                    as_completed(future_to_url),
+                    total=len(url_list),
+                    desc="Scraping Genres",
+                ):
+                    url = future_to_url[future]
+                    try:
+                        scraped_data = future.result()
+                        all_anime_data.extend(scraped_data)
+                    except requests.exceptions.RequestException as exc:
+                        # The future.result() call re-raises any exception that occurred in the worker thread.
+                        # We catch specific exceptions here to provide better debugging information and
+                        # prevent a single failed URL from crashing the entire scraping process.
+                        print(f"\nNetwork error for {url}: {exc}")
+                    except AttributeError as exc:
+                        # This is often a sign that the website's HTML structure has changed.
+                        print(f"\nHTML parsing error for {url}: {exc}")
 
         save_data(all_anime_data, current_date)
 
