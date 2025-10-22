@@ -3,15 +3,15 @@ This script contains functions to scrape anime data from MyAnimeList.net.
 It is intended to be run as a standalone script to generate the raw dataset.
 """
 
-import io
 import argparse
 import cProfile
+import io
+import logging
 import pstats
 import re
 import time
 from datetime import datetime
 from pathlib import Path
-import logging
 
 import pandas as pd
 import requests
@@ -75,9 +75,8 @@ def _get_episode_info(info_div: BeautifulSoup) -> dict:
     match = re.search(r"(\d+)\s*eps", eps_text)
     # class_=["item finished", "item airing"] looks for a single class string;
     # MAL uses multiple classes. Match by tokens or CSS selectors.
-    status_el = (
-        info_div.select_one("span.item.finished")
-        or info_div.select_one("span.item.airing")
+    status_el = info_div.select_one("span.item.finished") or info_div.select_one(
+        "span.item.airing"
     )
     return {
         "Episodes": match.group(1) if match else "N/A",
@@ -90,7 +89,9 @@ def _get_production_info(soup: BeautifulSoup) -> dict:
     properties_div = soup.find("div", class_="properties")
     genres_div = soup.find("div", class_="genres-inner")
     return {
-        "Genres": ", ".join(g.text for g in genres_div.find_all("a")) if genres_div else "N/A",
+        "Genres": (
+            ", ".join(g.text for g in genres_div.find_all("a")) if genres_div else "N/A"
+        ),
         "Studio": _extract_property(properties_div, "Studio"),
         "Source": _extract_property(properties_div, "Source"),
         "Demographic": _extract_property(properties_div, "Demographic"),
@@ -130,6 +131,7 @@ def scrape_anime_data(anime_item_html: str) -> dict:
         "Rating": safe_float(soup.find("div", class_="score")),
     }
     return anime_data
+
 
 def fetch_and_scrape(
     url: str, page_limit: int = 100, retries: int = 3, delay: int = 5
@@ -181,6 +183,7 @@ def fetch_and_scrape(
 
     return all_data
 
+
 def save_data(data: list[dict], date_str: str) -> None:
     """Saves the scraped data to a CSV file."""
     if not data:
@@ -193,13 +196,16 @@ def save_data(data: list[dict], date_str: str) -> None:
     df.to_csv(file_path, index=False)
     print(f"Data successfully saved to {file_path}")
 
+
 def main():
     """Main function to run the web scraper for all genres."""
-    parser = argparse.ArgumentParser(description='Run the web scraper to extract data from MyAnimeList website')
+    parser = argparse.ArgumentParser(
+        description="Run the web scraper to extract data from MyAnimeList website"
+    )
     parser.add_argument(
         "--profile",
-        action='store_true',
-        help="Enable profiling on the script to clock the efficiency"
+        action="store_true",
+        help="Enable profiling on the script to clock the efficiency",
     )
     # Default to genre 1 if --profile is used without specific genres
     parser.add_argument(
@@ -211,14 +217,13 @@ def main():
     )
     args = parser.parse_args()
 
-
     def _run_scraper(genre_list: list[int]) -> None:
         """
         helper function to perform the scraping based on the given genre list.
 
         :param genre_list: List containing the specific genres to scrape.
         """
-        logger.info('Scraping MyAnimeList')
+        logger.info("Scraping MyAnimeList")
         url_list = [f"{MYANIMELIST_BASE_URL}{genre_id}/" for genre_id in genre_list]
 
         current_date = get_current_date()
@@ -249,6 +254,6 @@ def main():
         _run_scraper(all_genres)  # Use all genres for normal run
         print("\n--- SCRAPING COMPLETE ---")
 
+
 if __name__ == "__main__":
     main()
-
