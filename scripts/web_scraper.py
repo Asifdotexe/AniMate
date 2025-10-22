@@ -114,7 +114,7 @@ def scrape_anime_data(anime_item_html: str) -> dict:
     Extracts structured data from the HTML of a single anime item by delegating
     to specialized helper functions.
     """
-    soup = BeautifulSoup(anime_item_html, "html.parser")
+    soup = BeautifulSoup(anime_item_html, "lxml")
 
     # Delegate extraction to helpers
     basic_info = _get_basic_info(soup)
@@ -145,7 +145,7 @@ def fetch_and_scrape(
             try:
                 response = session.get(page_url, timeout=REQUEST_TIMEOUT)
                 response.raise_for_status()
-                soup = BeautifulSoup(response.content, "html.parser")
+                soup = BeautifulSoup(response.content, "lxml")
                 anime_list = soup.find_all("div", class_="js-anime-category-producer")
 
                 if not anime_list:
