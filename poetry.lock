@@ -219,14 +219,14 @@ dev = ["backports.zoneinfo ; python_version < \"3.9\"", "freezegun (>=1.0,<2.0)"
 
 [[package]]
 name = "beautifulsoup4"
-version = "4.14.0"
+version = "4.14.2"
 description = "Screen-scraping library"
 optional = false
 python-versions = ">=3.7.0"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
-    {file = "beautifulsoup4-4.14.0-py3-none-any.whl", hash = "sha256:aee96fbccdf2d2a8d1288b2afa51fc76bb60823b7881a50fb1ed5f711d1a7d73"},
-    {file = "beautifulsoup4-4.14.0.tar.gz", hash = "sha256:e6150e53c8a52fd4f3b9b28839f8f0fb7c7f029d3c953a50b1762b0947c3cf85"},
+    {file = "beautifulsoup4-4.14.2-py3-none-any.whl", hash = "sha256:5ef6fa3a8cbece8488d66985560f97ed091e22bbc4e9c2338508a9d5de6d4515"},
+    {file = "beautifulsoup4-4.14.2.tar.gz", hash = "sha256:2a98ab9f944a11acee9cc848508ec28d9228abfd522ef0fad6a02a72e0ded69e"},
 ]
 
 [package.dependencies]
@@ -3648,7 +3648,7 @@ version = "2.8"
 description = "A modern CSS selector implementation for Beautiful Soup."
 optional = false
 python-versions = ">=3.9"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "soupsieve-2.8-py3-none-any.whl", hash = "sha256:0cc76456a30e20f5d7f2e14a98a4ae2ee4e5abdc7c5ea0aafe795f344bc7984c"},
     {file = "soupsieve-2.8.tar.gz", hash = "sha256:e2dd4a40a628cb5f28f6d4b0db8800b8f581b65bb380b97de22ba5ca8d72572f"},
@@ -4113,4 +4113,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "05a86118dbc7ed816ac4545bcbd581ebe64464d13e9b2ce08006f14c715c93ae"
+content-hash = "fed2ffc75123d7853714001aaca18ff5231c942a7c31225472b1cca19830ed8f"
