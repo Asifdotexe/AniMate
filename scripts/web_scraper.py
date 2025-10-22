@@ -3,18 +3,27 @@ This script contains functions to scrape anime data from MyAnimeList.net.
 It is intended to be run as a standalone script to generate the raw dataset.
 """
 
+import io
+import argparse
+import cProfile
+import pstats
 import re
 import time
 from datetime import datetime
 from pathlib import Path
+import logging
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
+from src.animate.config import MYANIMELIST_BASE_URL
+
 OUTPUT_DIR = Path(__file__).parent.parent / "data" / "raw"
 REQUEST_TIMEOUT = 10
+
+logger = logging.getLogger(__name__)
 
 
 def get_current_date() -> str:
@@ -122,7 +131,7 @@ def scrape_anime_data(anime_item_html: str) -> dict:
     }
     return anime_data
 
-def fetch_and_scrape(url: str, page_limit: int = 1, retries: int = 3, delay: int = 5) -> list[dict]:
+def fetch_and_scrape(url: str, page_limit: int, retries: int = 3, delay: int = 5) -> list[dict]:
     """Fetches and scrapes anime data from a given URL with multiple pages."""
     all_data = []
     consecutive_404s = 0
@@ -175,19 +184,60 @@ def save_data(data: list[dict], date_str: str) -> None:
 
 def main():
     """Main function to run the web scraper for all genres."""
-    print("Starting the AniMate web scraper...")
-    base_url = "https://myanimelist.net/anime/genre/"
-    url_list = [f"{base_url}{genre_id}/" for genre_id in range(1, 44)]
+    parser = argparse.ArgumentParser(description='Run the web scraper to extract data from MyAnimeList website')
+    parser.add_argument(
+        "--profile",
+        action='store_true',
+        help="Enable profiling on the script to clock the efficiency"
+    )
+    parser.add_argument(
+        "--genres",
+        nargs="+",
+        type=int,
+        default=[1],  # Default to genre 1 if --profile is used without specific genres
+        help="A list of genre IDs to scrape when profiling. Defaults to [1].",
+    )
+    args = parser.parse_args()
 
-    current_date = get_current_date()
-    all_anime_data = []
 
-    for url in tqdm(url_list, desc="Scraping Genres"):
-        scraped_data = fetch_and_scrape(url, page_limit=100)
-        all_anime_data.extend(scraped_data)
+    def _run_scraper(genre_list: list[int]) -> None:
+        """
+        helper function to perform the scraping based on the given genre list.
 
-    save_data(all_anime_data, current_date)
-    print("Scraping complete.")
+        :param genre_list: List containing the specific genres to scrape.
+        """
+        logger.info('Scraping MyAnimeList')
+        url_list = [f"{MYANIMELIST_BASE_URL}{genre_id}/" for genre_id in genre_list]
+
+        current_date = get_current_date()
+        all_anime_data = []
+
+        for url in tqdm(url_list, desc="Scraping Genres"):
+            scraped_data = fetch_and_scrape(url, page_limit=100)
+            all_anime_data.extend(scraped_data)
+
+        save_data(all_anime_data, current_date)
+
+    if args.profile:
+        profiler = cProfile.Profile()
+        profiler.enable()
+
+        _run_scraper(args.genres)
+
+        profiler.disable()
+        print("\n--- SCRAPING COMPLETE ---")
+        print("\n--- PERFORMANCE PROFILE ---")
+        s = io.StringIO()
+        sortby = pstats.SortKey.CUMULATIVE
+        ps = pstats.Stats(profiler, stream=s).sort_stats(sortby)
+        ps.print_stats(20)
+        print(s.getvalue())
+
+    else:
+        all_genres = list(range(1, 44))
+        _run_scraper(all_genres)  # Use all genres for normal run
+        print("\n--- SCRAPING COMPLETE ---")
 
 if __name__ == "__main__":
     main()
+

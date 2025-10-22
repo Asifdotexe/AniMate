@@ -18,6 +18,8 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 FINAL_DATA_DIR = DATA_DIR / "final"
 
+# Base URL from webscraping
+MYANIMELIST_BASE_URL = "https://myanimelist.net/anime/genre/"
 
 # Resolve the dataset path
 def _latest_final_csv() -> Path:
