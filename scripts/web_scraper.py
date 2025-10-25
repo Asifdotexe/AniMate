@@ -168,7 +168,7 @@ def fetch_and_scrape(
             "User-Agent": "AniMateScraper/2.0 (+https://github.com/Asifdotexe/AniMate)",
             "Accept-Language": "en-US,en;q=0.9",
         })
-        for page in tqdm(range(1, page_limit + 1), desc="Pages", leave=False):
+        for page in range(1, page_limit + 1):
             page_url = f"{url}?page={page}"
             for _ in range(retries):
                 try:
