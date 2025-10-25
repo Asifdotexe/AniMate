@@ -18,6 +18,17 @@ DATA_DIR = PROJECT_ROOT / "data"
 RAW_DATA_DIR = DATA_DIR / "raw"
 FINAL_DATA_DIR = DATA_DIR / "final"
 
+# Base URL from webscraping
+MYANIMELIST_BASE_URL = "https://myanimelist.net/anime/genre/"
+
+
+def genre_url(genre_id: int) -> str:
+    """Constructs a MyAnimeList genre URL with trailing slash.
+    :param genre_id: Ingests the genre id
+    :returns: URL to scrape
+    """
+    return f"{MYANIMELIST_BASE_URL}{genre_id}/"
+
 
 # Resolve the dataset path
 def _latest_final_csv() -> Path:
