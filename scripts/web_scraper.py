@@ -134,7 +134,7 @@ def scrape_anime_data(anime_item_html: str) -> dict:
 
 
 def fetch_and_scrape(
-    session: requests.Session, url: str, page_limit: int = 100, retries: int = 3, delay: int = 5
+    url: str, page_limit: int = 100, retries: int = 3, delay: int = 5
 ) -> list[dict]:
     """
     Fetches and scrapes anime data for a single genre URL using a shared session.
@@ -241,30 +241,29 @@ def main():
         current_date = get_current_date()
         all_anime_data = []
 
-        with requests.Session() as session:
-            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-                future_to_url = {
-                    executor.submit(fetch_and_scrape, session, url): url
-                    for url in url_list
-                }
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            future_to_url = {
+                executor.submit(fetch_and_scrape, url): url
+                for url in url_list
+            }
 
-                for future in tqdm(
-                    as_completed(future_to_url),
-                    total=len(url_list),
-                    desc="Scraping Genres",
-                ):
-                    url = future_to_url[future]
-                    try:
-                        scraped_data = future.result()
-                        all_anime_data.extend(scraped_data)
-                    except requests.exceptions.RequestException as exc:
-                        # The future.result() call re-raises any exception that occurred in the worker thread.
-                        # We catch specific exceptions here to provide better debugging information and
-                        # prevent a single failed URL from crashing the entire scraping process.
-                        print(f"\nNetwork error for {url}: {exc}")
-                    except AttributeError as exc:
-                        # This is often a sign that the website's HTML structure has changed.
-                        print(f"\nHTML parsing error for {url}: {exc}")
+            for future in tqdm(
+                as_completed(future_to_url),
+                total=len(url_list),
+                desc="Scraping Genres",
+            ):
+                url = future_to_url[future]
+                try:
+                    scraped_data = future.result()
+                    all_anime_data.extend(scraped_data)
+                except requests.exceptions.RequestException as exc:
+                    # The future.result() call re-raises any exception that occurred in the worker thread.
+                    # We catch specific exceptions here to provide better debugging information and
+                    # prevent a single failed URL from crashing the entire scraping process.
+                    print(f"\nNetwork error for {url}: {exc}")
+                except AttributeError as exc:
+                    # This is often a sign that the website's HTML structure has changed.
+                    print(f"\nHTML parsing error for {url}: {exc}")
 
         save_data(all_anime_data, current_date)
 
