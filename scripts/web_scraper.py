@@ -3,6 +3,7 @@ This script contains functions to scrape anime data from MyAnimeList.net.
 It is intended to be run as a standalone script to generate the raw dataset.
 """
 
+import random
 import argparse
 import cProfile
 import io
@@ -137,7 +138,8 @@ def fetch_and_scrape(
     url: str, page_limit: int = 100, retries: int = 3, delay: int = 5
 ) -> list[dict]:
     """
-    Fetches and scrapes anime data for a single genre URL using a shared session.
+    Fetches and scrapes anime data for a single genre URL.
+    Creates a dedicated session with retry logic and connection pooling.
     """
     all_data = []
     with requests.Session() as session:
@@ -182,7 +184,7 @@ def fetch_and_scrape(
                         all_data.append(scrape_anime_data(str(anime_item)))
 
                     # small jitter to avoid burst alignment across threads
-                    time.sleep(0.25 + 0.25 * (hash(page_url) % 7) / 7)
+                    time.sleep(0.25 + 0.25 * random.random())
                     break
                 except requests.HTTPError as e:
                     if e.response.status_code == HTTPStatus.NOT_FOUND:
