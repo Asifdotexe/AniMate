@@ -91,7 +91,7 @@ def _get_production_info(soup: BeautifulSoup) -> dict:
     genres_div = soup.find("div", class_="genres-inner")
     return {
         "Genres": (
-            ", ".join(g.text for g in genres_div.find_all("a")) if genres_div else "N/A"
+            ", ".join(g.get_text(strip=True) for g in genres_div.find_all("a")) if genres_div else "N/A"
         ),
         "Studio": _extract_property(properties_div, "Studio"),
         "Source": _extract_property(properties_div, "Source"),
@@ -111,12 +111,12 @@ def _extract_property(properties_div: BeautifulSoup, caption: str) -> str:
     return "N/A"
 
 
-def scrape_anime_data(anime_item_html: str) -> dict:
+def scrape_anime_data(anime_item) -> dict:
     """
     Extracts structured data from the HTML of a single anime item by delegating
     to specialized helper functions.
     """
-    soup = BeautifulSoup(anime_item_html, "lxml")
+    soup = anime_item
 
     # Delegate extraction to helpers
     basic_info = _get_basic_info(soup)
@@ -181,7 +181,7 @@ def fetch_and_scrape(
                         return all_data
 
                     for anime_item in anime_list:
-                        all_data.append(scrape_anime_data(str(anime_item)))
+                        all_data.append(scrape_anime_data(anime_item))
 
                     # small jitter to avoid burst alignment across threads
                     time.sleep(0.25 + 0.25 * random.random())
@@ -231,6 +231,12 @@ def main():
         default=[1],
         help="A list of genre IDs to scrape when profiling. Defaults to [1].",
     )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=MAX_WORKERS,
+        help=f"Max concurrent genres (default: {MAX_WORKERS}).",
+    )
     args = parser.parse_args()
 
     def _run_scraper(genre_list: list[int]) -> None:
@@ -243,7 +249,7 @@ def main():
         current_date = get_current_date()
         all_anime_data = []
 
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        with ThreadPoolExecutor(max_workers=args.workers) as executor:
             future_to_url = {
                 executor.submit(fetch_and_scrape, url): url
                 for url in url_list
@@ -259,12 +265,8 @@ def main():
                     scraped_data = future.result()
                     all_anime_data.extend(scraped_data)
                 except requests.exceptions.RequestException as exc:
-                    # The future.result() call re-raises any exception that occurred in the worker thread.
-                    # We catch specific exceptions here to provide better debugging information and
-                    # prevent a single failed URL from crashing the entire scraping process.
                     print(f"\nNetwork error for {url}: {exc}")
                 except AttributeError as exc:
-                    # This is often a sign that the website's HTML structure has changed.
                     print(f"\nHTML parsing error for {url}: {exc}")
 
         save_data(all_anime_data, current_date)
