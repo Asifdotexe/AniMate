@@ -159,6 +159,7 @@ def fetch_and_scrape(
             allowed_methods=["GET"],
             raise_on_status=False
         )
+        # NOTE: Reduce pool_maxsize to avoid excessive concurrent connections, during rate limit
         adapter = HTTPAdapter(max_retries=retry, pool_maxsize=MAX_WORKERS)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
