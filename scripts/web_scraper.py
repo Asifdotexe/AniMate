@@ -20,7 +20,7 @@ from tqdm import tqdm
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
-from animate.config import MYANIMELIST_BASE_URL, RAW_DATA_DIR
+from animate.config import RAW_DATA_DIR, genre_url
 
 REQUEST_TIMEOUT = 10
 MAX_WORKERS = 10
@@ -237,7 +237,7 @@ def main():
 
         :param genre_list: List containing the specific genres to scrape.
         """
-        url_list = [MYANIMELIST_BASE_URL + str(genre_id) + "/" for genre_id in genre_list]
+        url_list = [genre_url(genre_id) for genre_id in genre_list]
         current_date = get_current_date()
         all_anime_data = []
 
