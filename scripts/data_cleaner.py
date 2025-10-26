@@ -150,6 +150,24 @@ def main() -> None:
 
     df['synopsis'] = clean_synopsis(df['synopsis'])
 
+    # Drop rows with missing essential info (after cleaning synopsis)
+    initial_rows = len(df)
+    # Check for NaN/None in title as well
+    df.dropna(subset=['title'], inplace=True)
+    # Ensure title is not empty string
+    df = df[df['title'].astype(str).str.strip().str.len() > 0]
+    df.dropna(subset=['synopsis'], inplace=True)
+    # Ensure synopsis not empty after cleaning
+    df = df[df['synopsis'].str.len() > 0]
+
+    rows_dropped = initial_rows - len(df)
+    if rows_dropped > 0:
+        print(f"Dropped {rows_dropped} rows due to missing/empty title or synopsis.")
+    if df.empty:
+        # Use ValueError for condition that prevents script's purpose
+        raise ValueError("Error: No valid data remaining after dropping missing titles/synopses.")
+
+
     if "release_year" in df.columns:
         df["release_year"] = clean_numeric_columns(df["release_year"], target_type=int)
     if "episodes" in df.columns:
