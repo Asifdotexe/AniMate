@@ -65,9 +65,7 @@ def calculate_duration_features(
     :return: _description_
     """
     # Ensure episodes is numeric, fill NaN with 0 for calculation
-    episodes_numeric = clean_numeric_columns(no_of_episodes, target_type=float).fillna(
-        0
-    )
+    episodes_numeric = clean_numeric_columns(no_of_episodes, target_type=float).fillna(0)
 
     total_duration_minutes = episodes_numeric * avg_duration
     total_duration_hours = (total_duration_minutes / 60).round(2)
@@ -101,6 +99,23 @@ def calculate_duration_features(
     return total_duration_hours, duration_category.astype("category")
 
 
+def clean_synopsis(series: pd.Series) -> pd.Series:
+    """
+    Cleans the synopsis text, removing placeholders.
+
+    :param series: Pandas series that needs to be cleaned
+    :return: Cleaned pandas synopsis series
+    """
+    placeholder_patterns = [
+        r'^\(No synopsis yet\.\)$', # Match exact string
+        r'^No synopsis has been added.*', # Match start of string
+        r'^N/A$' # Match exact 'N/A'
+    ]
+    # Apply replacements iteratively or combine regex carefully
+    cleaned_series = series.astype(str).replace(placeholder_patterns, np.nan, regex=True)
+    return cleaned_series.fillna('').str.strip()
+
+
 def main() -> None:
     """
     Orcastrates the data cleaning process
@@ -124,6 +139,7 @@ def main() -> None:
         print(
             f"Warning: Raw data missing expected columns: {missing_cols}. They will not be included."
         )
+
     # Ensure essential columns exist before proceeding
     if "title" not in available_cols or "synopsis" not in available_cols:
         raise ValueError(
@@ -131,6 +147,8 @@ def main() -> None:
         )
 
     df = df[available_cols].copy()
+
+    df['synopsis'] = clean_synopsis(df['synopsis'])
 
     if "release_year" in df.columns:
         df["release_year"] = clean_numeric_columns(df["release_year"], target_type=int)
