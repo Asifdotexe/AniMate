@@ -2,6 +2,10 @@
 Clean and preprocesses the raw scraped data for use in the AniMate app
 """
 
+import argparse
+import cProfile
+import io
+import pstats
 import re
 import traceback
 from pathlib import Path
@@ -35,10 +39,6 @@ def clean_numeric_columns(series: pd.Series, target_type=float) -> pd.Series:
     :param target: The datatype of the column we want to convert the existing column to
     :return: Cleaned pandas series
     """
-    print("Cleaning numeric columns...")
-    # FIXME: Understand the scraper's old cold to see if this can be done during the scraping process
-    # Converting the 'N/A' to np.nan
-    series = series.replace("N/A", np.nan)
     # Converting the errors to np.nan
     numeric_series = pd.to_numeric(series, errors="coerce")
     # Convert to the desired integer type if possible (e.g., float -> Int64)
@@ -160,7 +160,7 @@ def load_and_validate_data(input_path: Path) -> pd.DataFrame:
         raise FileNotFoundError(f"Error: Input file not found at {input_path}")
     print(f"Loading raw data from {input_path}...")
     try:
-        df = pd.read_csv(input_path, low_memory=False)
+        df = pd.read_csv(input_path, low_memory=False, na_values=['N/A'])
     except Exception as e:
         print(f"Error loading CSV: {e}")
         raise
@@ -239,7 +239,7 @@ def finalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     return df_final
 
 
-def main() -> None:
+def run_cleaning_pipeline() -> None:
     """
     Orcastrates the data cleaning process
     """
@@ -269,4 +269,45 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Clean raw scraped anime data.")
+    parser.add_argument(
+        "--profile",
+        action="store_true",
+        help="Enable profiling for the cleaning process."
+    )
+    args = parser.parse_args()
+
+    if args.profile:
+        print("--- Running Cleaning Script with Profiling ---")
+        profiler = cProfile.Profile()
+        profiler.enable()
+        success = False
+        try:
+            run_cleaning_pipeline()
+            success = True # Mark as successful if no exceptions
+        except FileNotFoundError as e:
+            print(e)
+        except ValueError as e:
+            print(e)
+        except Exception as e:
+            print(f"An unexpected error occurred during processing: {e}")
+            import traceback
+            traceback.print_exc()
+        finally:
+            profiler.disable()
+            print("\n--- PERFORMANCE PROFILE ---")
+            s = io.StringIO()
+            ps = pstats.Stats(profiler, stream=s).sort_stats(pstats.SortKey.CUMULATIVE)
+            ps.print_stats(30) # Show top 30 lines
+            print(s.getvalue())
+    else:
+        try:
+            run_cleaning_pipeline(args.input_filename, args.output_filename)
+            print("\n--- Cleaning Complete ---")
+        except FileNotFoundError as e:
+            print(e)
+        except ValueError as e:
+            print(e)
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            traceback.print_exc()
