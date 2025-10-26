@@ -21,7 +21,7 @@ def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def clean_numeric_columns(series: pd.Series, target = float) -> pd.Series:
+def clean_numeric_columns(series: pd.Series, target_type=float) -> pd.Series:
     """
     Converts a Series to a numeric type, coercing errors to NaN.
 
@@ -36,7 +36,7 @@ def clean_numeric_columns(series: pd.Series, target = float) -> pd.Series:
     # Converting the errors to np.nan
     numeric_series = pd.to_numeric(series, errors="coerce")
     # Convert to the desired integer type if possible (e.g., float -> Int64)
-    if pd.api.types.is_integer_dtype(target) and not numeric_series.isnull().any():
+    if pd.api.types.is_integer_dtype(target_type) and not numeric_series.isnull().any():
         # Use nullable integer type Int64 to handle potential NaNs introduced by coerce
         # If no NaNs remain after coerce, can convert safely.
         # However, if NaNs *might* exist, better to keep as float or use pd.Int64Dtype()
@@ -47,7 +47,7 @@ def clean_numeric_columns(series: pd.Series, target = float) -> pd.Series:
             # Keep as float if conversion fails (e.g., due to remaining NaNs)
             pass
 
-    elif pd.api.types.is_float_dtype(target):
+    elif pd.api.types.is_float_dtype(target_type):
         # Ensure it's standard float
         return numeric_series.astype(float)
     return numeric_series
@@ -73,25 +73,30 @@ def main() -> None:
 
     missing_cols = set(REQ_RAW_COLUMNS) - set(available_cols)
     if missing_cols:
-        print(f"Warning: Raw data missing expected columns: {missing_cols}. They will not be included.")
+        print(
+            f"Warning: Raw data missing expected columns: {missing_cols}. They will not be included."
+        )
     # Ensure essential columns exist before proceeding
-    if 'title' not in available_cols or 'synopsis' not in available_cols:
-         raise ValueError("Error: Essential 'title' or 'synopsis' column missing from input data.")
+    if "title" not in available_cols or "synopsis" not in available_cols:
+        raise ValueError(
+            "Error: Essential 'title' or 'synopsis' column missing from input data."
+        )
 
     df = df[available_cols].copy()
 
-    if 'release_year' in df.columns:
-        df['release_year'] = clean_numeric_columns(df['release_year'], target_type=int)
-    if 'episodes' in df.columns:
-        df['episodes'] = clean_numeric_columns(df['episodes'], target_type=float)
-    if 'rating' in df.columns:
-        df['score'] = clean_numeric_columns(df['rating'], target_type=float)
+    if "release_year" in df.columns:
+        df["release_year"] = clean_numeric_columns(df["release_year"], target_type=int)
+    if "episodes" in df.columns:
+        df["episodes"] = clean_numeric_columns(df["episodes"], target_type=float)
+    if "rating" in df.columns:
+        df["score"] = clean_numeric_columns(df["rating"], target_type=float)
     else:
-        df['score'] = np.nan
-    if 'rating' in available_cols and 'score' in df.columns:
-         df.drop(columns=['rating'], inplace=True)
+        df["score"] = np.nan
+    if "rating" in available_cols and "score" in df.columns:
+        df.drop(columns=["rating"], inplace=True)
 
     df.to_csv(output_path, index=False)
+
 
 if __name__ == "__main__":
     main()
