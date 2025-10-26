@@ -42,6 +42,10 @@ def _latest_final_csv() -> Path:
 
 FINAL_DATA_PATH = Path(os.getenv("ANIMATE_FINAL_DATA_PATH", _latest_final_csv()))
 
-# Centralize other settings
+# used in src/animate/app.py
 MAX_FEATURES = 5000
 N_NEIGHBORS = 5
+
+# used in scripts/web_scraper.py
+SCRAPER_REQUEST_TIMEOUT = 10
+SCRAPER_MAX_WORKERS = 10

@@ -21,10 +21,7 @@ from tqdm import tqdm
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
-from animate.config import RAW_DATA_DIR, genre_url
-
-REQUEST_TIMEOUT = 10
-MAX_WORKERS = 10
+from animate.config import SCRAPER_REQUEST_TIMEOUT, SCRAPER_MAX_WORKERS, RAW_DATA_DIR, genre_url
 
 
 def get_current_date() -> str:
@@ -160,7 +157,7 @@ def fetch_and_scrape(
             raise_on_status=False
         )
         # NOTE: Reduce pool_maxsize to avoid excessive concurrent connections, during rate limit
-        adapter = HTTPAdapter(max_retries=retry, pool_maxsize=MAX_WORKERS)
+        adapter = HTTPAdapter(max_retries=retry, pool_maxsize=SCRAPER_MAX_WORKERS)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
 
@@ -173,7 +170,7 @@ def fetch_and_scrape(
             page_url = f"{url}?page={page}"
             for _ in range(retries):
                 try:
-                    response = session.get(page_url, timeout=REQUEST_TIMEOUT)
+                    response = session.get(page_url, timeout=SCRAPER_REQUEST_TIMEOUT)
                     response.raise_for_status()
                     soup = BeautifulSoup(response.content, "lxml")
                     anime_list = soup.find_all("div", class_="js-anime-category-producer")
@@ -235,8 +232,8 @@ def main():
     parser.add_argument(
         "--workers",
         type=int,
-        default=MAX_WORKERS,
-        help=f"Max concurrent genres (default: {MAX_WORKERS}).",
+        default=SCRAPER_MAX_WORKERS,
+        help=f"Max concurrent genres (default: {SCRAPER_MAX_WORKERS}).",
     )
     args = parser.parse_args()
 
