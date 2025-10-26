@@ -148,8 +148,8 @@ def clean_synopsis(series: pd.Series) -> pd.Series:
         r"^N/A$",  # Match exact 'N/A'
     ]
     # Apply replacements iteratively or combine regex carefully
-    cleaned_series = series.astype(str).replace(
-        placeholder_patterns, np.nan, regex=True
+    cleaned_series = series.astype("string").replace(
+        placeholder_patterns, pd.NA, regex=True
     )
     return cleaned_series.fillna("").str.strip()
 
