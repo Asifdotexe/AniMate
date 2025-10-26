@@ -5,7 +5,8 @@ Clean and preprocesses the raw scraped data for use in the AniMate app
 import numpy as np
 import pandas as pd
 
-from animate.config import PROCESSED_DATA_DIR, RAW_DATA_DIR, REQ_RAW_COLUMNS
+from animate.config import (AVG_EPISODE_DURATION_MINS, PROCESSED_DATA_DIR,
+                            RAW_DATA_DIR, REQ_RAW_COLUMNS)
 from animate.util import fetch_latest_final_csv_path
 
 
@@ -53,6 +54,53 @@ def clean_numeric_columns(series: pd.Series, target_type=float) -> pd.Series:
     return numeric_series
 
 
+def calculate_duration_features(
+    no_of_episodes: pd.Series, avg_duration: int
+) -> tuple[pd.Series, pd.Series]:
+    """
+    Calculates total duration in hours and assigns a duration category
+
+    :param no_of_episodes: Number of episodes for a given anime
+    :param avg_duration: The average anime duration (based on assumption)
+    :return: _description_
+    """
+    # Ensure episodes is numeric, fill NaN with 0 for calculation
+    episodes_numeric = clean_numeric_columns(no_of_episodes, target_type=float).fillna(
+        0
+    )
+
+    total_duration_minutes = episodes_numeric * avg_duration
+    total_duration_hours = (total_duration_minutes / 60).round(2)
+
+    # Define bins and labels for duration categories
+    bins = [-np.inf, 0, 2, 6, 12, 30, 100, np.inf]
+    labels = [
+        "Unknown",  # Corresponds to 0 episodes or NaN
+        "Very Short (<2h)",  # Movie/Special
+        "Short (2-6h)",
+        "Medium (6-12h)",
+        "Long (12-30h)",
+        "Very Long (30-100h)",
+        "Epic (>100h)",
+    ]
+
+    # Use pd.cut to categorize
+    duration_category = pd.cut(
+        total_duration_hours, bins=bins, labels=labels, right=True
+    )
+
+    if "Unknown" not in duration_category.cat.categories:
+        # This case should ideally not happen if labels are defined correctly
+        duration_category = duration_category.cat.add_categories("Unknown")
+    duration_category[episodes_numeric <= 0] = "Unknown"
+
+    # Convert hours back to NaN where episodes were originally NaN or 0
+    total_duration_hours = total_duration_hours.where(episodes_numeric > 0, np.nan)
+
+    # Return duration_category as pandas Categorical dtype
+    return total_duration_hours, duration_category.astype("category")
+
+
 def main() -> None:
     """
     Orcastrates the data cleaning process
@@ -94,6 +142,16 @@ def main() -> None:
         df["score"] = np.nan
     if "rating" in available_cols and "score" in df.columns:
         df.drop(columns=["rating"], inplace=True)
+
+    if "episodes" in df.columns:
+        df["total_duration_hours"], df["duration_category"] = (
+            calculate_duration_features(df["episodes"], AVG_EPISODE_DURATION_MINS)
+        )
+    else:
+        df["total_duration_hours"] = np.nan
+        df["duration_category"] = "Unknown"
+    # Ensure duration_category is category type
+    df["duration_category"] = df["duration_category"].astype("category")
 
     df.to_csv(output_path, index=False)
 
