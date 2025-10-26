@@ -42,10 +42,10 @@ def clean_numeric_columns(series: pd.Series, target_type=float) -> pd.Series:
     # Replace 'N/A' string with actual NaN before conversion
     # Ensure it's string type first to use .replace reliably
     if pd.api.types.is_string_dtype(series) or pd.api.types.is_object_dtype(series):
-        series = series.replace('N/A', np.nan)
+        series = series.replace("N/A", np.nan)
 
     # Convert, turning errors into NaN. Result is usually float64 if NaNs occur.
-    numeric_series = pd.to_numeric(series, errors='coerce')
+    numeric_series = pd.to_numeric(series, errors="coerce")
 
     # Check if the target type is specifically integer.
     if target_type is int:
@@ -68,17 +68,25 @@ def clean_numeric_columns(series: pd.Series, target_type=float) -> pd.Series:
                 # Use nullable integer type Int64, works even if NaNs are present.
                 return numeric_series.astype(pd.Int64Dtype())
             except Exception as e:
-                print(f"Warning: Could not cast to Int64 despite integral check: {e}. Keeping as float.")
+                print(
+                    f"Warning: Could not cast to Int64 despite integral check: {e}. Keeping as float."
+                )
                 pass
 
     if pd.api.types.is_float_dtype(target_type) or target_type is int:
         try:
+            # Attempt to cast to standard float
             return numeric_series.astype(float)
-        except:
-            print(f"Warning: Could not cast to float: {e}. Returning original numeric series.")
-            return numeric_series
+        except Exception as e:
+            # If float cast fails, return the result of pd.to_numeric
+            print(
+                f"Warning: Could not cast to float: {e}. Returning original numeric series."
+            )
+            return numeric_series  # Explicit return
 
-    return numeric_series
+    # If target_type was neither int nor float initially, return the numeric series as is.
+    return numeric_series  # Explicit final return
+
 
 def calculate_duration_features(
     no_of_episodes: pd.Series, avg_duration: int
@@ -181,7 +189,7 @@ def load_and_validate_data(input_path: Path) -> pd.DataFrame:
         raise FileNotFoundError(f"Error: Input file not found at {input_path}")
     print(f"Loading raw data from {input_path}...")
     try:
-        df = pd.read_csv(input_path, low_memory=False, na_values=['N/A'])
+        df = pd.read_csv(input_path, low_memory=False, na_values=["N/A"])
     except Exception as e:
         print(f"Error loading CSV: {e}")
         raise
@@ -262,7 +270,7 @@ def finalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 def run_cleaning_pipeline() -> None:
     """
-    Orcastrates the data cleaning process
+    Orchestrates the data cleaning process
     """
 
     # Defining the input and output file dynamically by picking the file with the latest suffix data in it's filename
@@ -294,7 +302,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--profile",
         action="store_true",
-        help="Enable profiling for the cleaning process."
+        help="Enable profiling for the cleaning process.",
     )
     args = parser.parse_args()
 
@@ -305,25 +313,24 @@ if __name__ == "__main__":
         success = False
         try:
             run_cleaning_pipeline()
-            success = True # Mark as successful if no exceptions
+            success = True  # Mark as successful if no exceptions
         except FileNotFoundError as e:
             print(e)
         except ValueError as e:
             print(e)
         except Exception as e:
             print(f"An unexpected error occurred during processing: {e}")
-            import traceback
             traceback.print_exc()
         finally:
             profiler.disable()
             print("\n--- PERFORMANCE PROFILE ---")
             s = io.StringIO()
             ps = pstats.Stats(profiler, stream=s).sort_stats(pstats.SortKey.CUMULATIVE)
-            ps.print_stats(30) # Show top 30 lines
+            ps.print_stats(30)  # Show top 30 lines
             print(s.getvalue())
     else:
         try:
-            run_cleaning_pipeline(args.input_filename, args.output_filename)
+            run_cleaning_pipeline()
             print("\n--- Cleaning Complete ---")
         except FileNotFoundError as e:
             print(e)

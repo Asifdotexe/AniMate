@@ -12,9 +12,13 @@ def fetch_latest_final_csv_path(data_directory: Path) -> Path:
     :param data_directory: Path to the directory containing file in name_timestamp.csv format
     :return: Path to the latest CSV file based on the timestamp
     """
-    file_path = sorted(
+    if not data_directory.exists():
+        raise FileNotFoundError(f"Directory not found: {data_directory}")
+    candidates = sorted(
         data_directory.glob("anime_dump_*.csv"),
         key=lambda p: p.stat().st_mtime,
+        reverse=True
     )
-    assert len(file_path) > 0, "The directory is empty"
-    return file_path[0]
+    if not candidates:
+        raise FileNotFoundError(f"No anime_dump_*.csv found in {data_directory}")
+    return candidates[0]
