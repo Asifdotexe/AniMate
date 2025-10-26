@@ -2,11 +2,16 @@
 Clean and preprocesses the raw scraped data for use in the AniMate app
 """
 
+import re
+import traceback
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
-from animate.config import (AVG_EPISODE_DURATION_MINS, PROCESSED_DATA_DIR,
-                            RAW_DATA_DIR, REQ_RAW_COLUMNS)
+from animate.config import (AVG_EPISODE_DURATION_MINS, FINAL_APP_COLUMNS,
+                            MATURE_GENRES, PROCESSED_DATA_DIR, RAW_DATA_DIR,
+                            REQ_RAW_COLUMNS)
 from animate.util import fetch_latest_final_csv_path
 
 
@@ -65,7 +70,9 @@ def calculate_duration_features(
     :return: _description_
     """
     # Ensure episodes is numeric, fill NaN with 0 for calculation
-    episodes_numeric = clean_numeric_columns(no_of_episodes, target_type=float).fillna(0)
+    episodes_numeric = clean_numeric_columns(no_of_episodes, target_type=float).fillna(
+        0
+    )
 
     total_duration_minutes = episodes_numeric * avg_duration
     total_duration_hours = (total_duration_minutes / 60).round(2)
@@ -107,13 +114,129 @@ def clean_synopsis(series: pd.Series) -> pd.Series:
     :return: Cleaned pandas synopsis series
     """
     placeholder_patterns = [
-        r'^\(No synopsis yet\.\)$', # Match exact string
-        r'^No synopsis has been added.*', # Match start of string
-        r'^N/A$' # Match exact 'N/A'
+        r"^\(No synopsis yet\.\)$",  # Match exact string
+        r"^No synopsis has been added.*",  # Match start of string
+        r"^N/A$",  # Match exact 'N/A'
     ]
     # Apply replacements iteratively or combine regex carefully
-    cleaned_series = series.astype(str).replace(placeholder_patterns, np.nan, regex=True)
-    return cleaned_series.fillna('').str.strip()
+    cleaned_series = series.astype(str).replace(
+        placeholder_patterns, np.nan, regex=True
+    )
+    return cleaned_series.fillna("").str.strip()
+
+
+def filter_mature(df: pd.DataFrame, genre_column: str = "genres") -> pd.DataFrame:
+    """
+    Removes rows containing mature genres.
+
+    :param df: Pandas dataframe containing genre column
+    :param genre_column: Optional field if there is any additional genre columns, defaults to 'genres'
+    :return: Pandas dataframe post mature content filtering
+    """
+    if genre_column not in df.columns:
+        print(
+            f"Warning: Genre column '{genre_column}' not found. Skipping mature content filtering."
+        )
+        return df
+
+    # Ensure genres are strings and handle NaN
+    genres_str = df[genre_column].fillna("").astype(str).str.lower()
+
+    # Create a regex pattern for mature words (boundary checks might be useful)
+    # Using word boundaries (\b) to avoid matching substrings within other words
+    mature_pattern = r"\b(?:" + "|".join(re.escape(g) for g in MATURE_GENRES) + r")\b"
+
+    # Filter out rows where genres contain mature words
+    mask = ~genres_str.str.contains(mature_pattern, regex=True, na=False)
+    removed_count = len(df) - mask.sum()
+    if removed_count > 0:
+        print(f"Removed {removed_count} entries with mature genres.")
+    return df[mask]
+
+
+def load_and_validate_data(input_path: Path) -> pd.DataFrame:
+    """Loads raw data, validates path, cleans columns, selects initial columns."""
+    if not input_path.exists():
+        raise FileNotFoundError(f"Error: Input file not found at {input_path}")
+    print(f"Loading raw data from {input_path}...")
+    try:
+        df = pd.read_csv(input_path, low_memory=False)
+    except Exception as e:
+        print(f"Error loading CSV: {e}")
+        raise
+    df = clean_column_names(df)
+    available_cols = [col for col in REQ_RAW_COLUMNS if col in df.columns]
+    missing_cols = set(REQ_RAW_COLUMNS) - set(available_cols)
+    if missing_cols:
+        print(f"Warning: Raw data missing expected columns: {missing_cols}.")
+    if "title" not in available_cols or "synopsis" not in available_cols:
+        raise ValueError("Error: Essential 'title' or 'synopsis' column missing.")
+    return df[available_cols].copy()
+
+
+def apply_initial_cleaning(df: pd.DataFrame) -> pd.DataFrame:
+    """Cleans synopsis and drops rows with missing essential info."""
+    df["synopsis"] = clean_synopsis(df["synopsis"])
+    initial_rows = len(df)
+    df.dropna(subset=["title"], inplace=True)
+    df = df[df["title"].astype(str).str.strip().str.len() > 0]
+    df.dropna(subset=["synopsis"], inplace=True)
+    df = df[df["synopsis"].str.len() > 0]
+    rows_dropped = initial_rows - len(df)
+    if rows_dropped > 0:
+        print(f"Dropped {rows_dropped} rows due to missing/empty title/synopsis.")
+    if df.empty:
+        raise ValueError("Error: No valid data after dropping missing essentials.")
+    return df
+
+
+def process_numeric_and_features(df: pd.DataFrame) -> pd.DataFrame:
+    """Cleans numeric columns and calculates duration features."""
+    if "release_year" in df.columns:
+        df["release_year"] = clean_numeric_columns(df["release_year"], target_type=int)
+    if "episodes" in df.columns:
+        df["episodes"] = clean_numeric_columns(df["episodes"], target_type=float)
+    if "rating" in df.columns:
+        df["score"] = clean_numeric_columns(df["rating"], target_type=float)
+        df.drop(
+            columns=["rating"], inplace=True, errors="ignore"
+        )  # Ignore error if 'rating' somehow gone
+    else:
+        df["score"] = np.nan
+
+    if "episodes" in df.columns:
+        df["total_duration_hours"], df["duration_category"] = (
+            calculate_duration_features(df["episodes"], AVG_EPISODE_DURATION_MINS)
+        )
+    else:
+        df["total_duration_hours"] = np.nan
+        df["duration_category"] = "Unknown"
+    df["duration_category"] = df["duration_category"].astype("category")
+    return df
+
+
+def finalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Filters mature content, selects final columns, converts types, deduplicates."""
+    df = filter_mature(df, genre_column="genres")
+    if df.empty:
+        raise ValueError("Error: No data remaining after filtering mature content.")
+
+    final_columns_present = [col for col in FINAL_APP_COLUMNS if col in df.columns]
+    df_final = df[final_columns_present].copy()
+
+    for col in ["genres", "studio", "demographic", "source"]:
+        if col in df_final.columns and df_final[col].dtype == "object":
+            df_final[col] = df_final[col].astype("category")
+
+    initial_rows = len(df_final)
+    if "title" in df_final.columns:
+        df_final.drop_duplicates(subset=["title"], keep="last", inplace=True)
+        rows_dropped = initial_rows - len(df_final)
+        if rows_dropped > 0:
+            print(f"Dropped {rows_dropped} duplicate entries based on title.")
+    else:
+        print("Warning: 'title' column not found, cannot deduplicate.")
+    return df_final
 
 
 def main() -> None:
@@ -126,70 +249,23 @@ def main() -> None:
     input_path = fetch_latest_final_csv_path(RAW_DATA_DIR)
     output_path = PROCESSED_DATA_DIR / input_path.name
 
-    if not input_path.exists():
-        raise FileExistsError(f"Error: Input file not found at {input_path}")
+    try:
+        df = load_and_validate_data(input_path)
+        df = apply_initial_cleaning(df)
+        df = process_numeric_and_features(df)
+        df_final = finalize_dataframe(df)
 
-    # Setting low_memory as there are come columns with mix-type data
-    df = pd.read_csv(input_path, low_memory=False)
-    df = clean_column_names(df)
-    available_cols = [col for col in REQ_RAW_COLUMNS if col in df.columns]
-
-    missing_cols = set(REQ_RAW_COLUMNS) - set(available_cols)
-    if missing_cols:
-        print(
-            f"Warning: Raw data missing expected columns: {missing_cols}. They will not be included."
-        )
-
-    # Ensure essential columns exist before proceeding
-    if "title" not in available_cols or "synopsis" not in available_cols:
-        raise ValueError(
-            "Error: Essential 'title' or 'synopsis' column missing from input data."
-        )
-
-    df = df[available_cols].copy()
-
-    df['synopsis'] = clean_synopsis(df['synopsis'])
-
-    # Drop rows with missing essential info (after cleaning synopsis)
-    initial_rows = len(df)
-    # Check for NaN/None in title as well
-    df.dropna(subset=['title'], inplace=True)
-    # Ensure title is not empty string
-    df = df[df['title'].astype(str).str.strip().str.len() > 0]
-    df.dropna(subset=['synopsis'], inplace=True)
-    # Ensure synopsis not empty after cleaning
-    df = df[df['synopsis'].str.len() > 0]
-
-    rows_dropped = initial_rows - len(df)
-    if rows_dropped > 0:
-        print(f"Dropped {rows_dropped} rows due to missing/empty title or synopsis.")
-    if df.empty:
-        # Use ValueError for condition that prevents script's purpose
-        raise ValueError("Error: No valid data remaining after dropping missing titles/synopses.")
-
-
-    if "release_year" in df.columns:
-        df["release_year"] = clean_numeric_columns(df["release_year"], target_type=int)
-    if "episodes" in df.columns:
-        df["episodes"] = clean_numeric_columns(df["episodes"], target_type=float)
-    if "rating" in df.columns:
-        df["score"] = clean_numeric_columns(df["rating"], target_type=float)
-    else:
-        df["score"] = np.nan
-    if "rating" in available_cols and "score" in df.columns:
-        df.drop(columns=["rating"], inplace=True)
-
-    if "episodes" in df.columns:
-        df["total_duration_hours"], df["duration_category"] = (
-            calculate_duration_features(df["episodes"], AVG_EPISODE_DURATION_MINS)
-        )
-    else:
-        df["total_duration_hours"] = np.nan
-        df["duration_category"] = "Unknown"
-    # Ensure duration_category is category type
-    df["duration_category"] = df["duration_category"].astype("category")
-
-    df.to_csv(output_path, index=False)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        df_final.to_csv(output_path, index=False)
+        print(f"Successfully cleaned data saved to {output_path}")
+        print(f"Final dataset shape: {df_final.shape}")
+    except FileNotFoundError as e:
+        print(e)
+    except ValueError as e:
+        print(e)
+    except Exception as e:
+        print(f"An unexpected error occurred during processing: {e}")
+        traceback.print_exc()
 
 
 if __name__ == "__main__":

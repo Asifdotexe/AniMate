@@ -40,3 +40,9 @@ MATURE_GENRES = frozenset(['hentai', 'ecchi', 'erotica', 'adult themes'])
 REQ_RAW_COLUMNS = frozenset([
     'title', 'release_year', 'synopsis', 'episodes', 'genres', 'studio', 'source', 'demographic', 'rating'
 ])
+
+FINAL_APP_COLUMNS = frozenset([
+        'title', 'genres', 'synopsis', 'studio', 'demographic',
+        'source', 'duration_category', 'total_duration_hours', 'score'
+        # FIXME: Add 'other_name', 'image_url' here if present in available_cols
+    ])

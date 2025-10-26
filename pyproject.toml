@@ -43,4 +43,4 @@ max-line-length = 120
 
 [tool.pylint.messages_control]
 disable = ["redefined-outer-name", "invalid-name", "assignment-from-no-return", "too-many-branches",
-           "unused-argument", "unnecessary-pass", "fixme", "too-few-public-methods"]
+           "unused-argument", "unnecessary-pass", "fixme", "too-few-public-methods", "broad-exception-caught"]
