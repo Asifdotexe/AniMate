@@ -49,27 +49,27 @@ def clean_numeric_columns(series: pd.Series, target_type=float) -> pd.Series:
 
     # Check if the target type is specifically integer.
     if target_type is int:
-        mask = pd.notna(numeric_series)
-        if not mask.any():
+        # Get the non-NaN values directly
+        finite_values = numeric_series.dropna()
+
+        if finite_values.empty:
             try:
                 return numeric_series.astype(pd.Int64Dtype())
             except Exception:
                 return numeric_series
 
-    # Check if all finite values are whole numbers
-    # Using modulo operator: x % 1 == 0 for integers
-    # Or comparing with integer version: x.astype(int) == x
-    # The modulo approach is generally safer with potential floating point inaccuracies
-    is_integral = (numeric_series[mask] % 1 == 0).all()
+        # Check if all existing (finite) values are integral (whole numbers)
+        # Using modulo is generally safer than direct comparison for floats
+        is_integral = (finite_values % 1 == 0).all()
 
-    # If all non-NaN values are integral, cast to nullable Int64.
-    if is_integral:
-        try:
-            # Use nullable integer type Int64, works even if NaNs are present.
-            return numeric_series.astype(pd.Int64Dtype())
-        except Exception as e:
-            print(f"Warning: Could not cast to Int64 despite integral check: {e}. Keeping as float.")
-            pass
+        # If all non-NaN values are integral, cast to nullable Int64.
+        if is_integral:
+            try:
+                # Use nullable integer type Int64, works even if NaNs are present.
+                return numeric_series.astype(pd.Int64Dtype())
+            except Exception as e:
+                print(f"Warning: Could not cast to Int64 despite integral check: {e}. Keeping as float.")
+                pass
 
     if pd.api.types.is_float_dtype(target_type) or target_type is int:
         try:
