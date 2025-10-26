@@ -5,7 +5,7 @@ Utility functions
 from pathlib import Path
 
 
-def latest_final_csv(data_directory: Path) -> Path:
+def fetch_latest_final_csv_path(data_directory: Path) -> Path:
     """
     Fetches the latest file from the provided data directory based on the suffix timestamp in the CSV filenames
 
@@ -16,4 +16,5 @@ def latest_final_csv(data_directory: Path) -> Path:
         data_directory.glob("anime_dump_*.csv"),
         key=lambda p: p.stat().st_mtime,
     )
+    assert len(file_path) > 0, "The directory is empty"
     return file_path[0]
