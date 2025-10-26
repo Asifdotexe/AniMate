@@ -61,9 +61,7 @@ def load_data() -> pd.DataFrame:
         "image_url": "string",
     }
     # Corrected the file path to be relative to the app.py location
-    return pd.read_parquet(
-        FINAL_DATA_PATH, usecols=dtypes.keys(), dtype=dtypes
-    )
+    return pd.read_parquet(FINAL_DATA_PATH)
 
 
 stop_words = set(stopwords.words("english"))

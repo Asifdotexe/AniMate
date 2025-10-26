@@ -221,7 +221,7 @@ def load_and_validate_data(input_path: Path) -> pd.DataFrame:
         raise FileNotFoundError(f"Error: Input file not found at {input_path}")
     print(f"Loading raw data from {input_path}...")
     try:
-        df = pd.read_parquet(input_path, low_memory=False, na_values=["N/A"])
+        df = pd.read_parquet(input_path)
     except Exception as e:
         print(f"Error loading parquet: {e}")
         raise
