@@ -49,7 +49,7 @@ class RecommendationEngine:
             "source": "category", "duration_category": "category",
             "total_duration_hours": "float32", "score": "float32", "image_url": "string",
         }
-        return pd.read_csv(FINAL_DATA_PATH, usecols=dtypes.keys(), dtype=dtypes)
+        return pd.read_parquet(FINAL_DATA_PATH, usecols=dtypes.keys(), dtype=dtypes)
 
     def _stemming_tokenizer(self, text: str) -> list[str]:
         """Custom analyzer for TfidfVectorizer."""

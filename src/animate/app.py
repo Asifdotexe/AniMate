@@ -43,7 +43,7 @@ tqdm.pandas()
 @st.cache_data
 def load_data() -> pd.DataFrame:
     """
-    Load anime data from a CSV file and optimize data types.
+    Load anime data from a parquet file and optimize data types.
 
     :returns: A DataFrame containing the anime data with optimized dtypes.
     """
@@ -61,7 +61,7 @@ def load_data() -> pd.DataFrame:
         "image_url": "string",
     }
     # Corrected the file path to be relative to the app.py location
-    return pd.read_csv(
+    return pd.read_parquet(
         FINAL_DATA_PATH, usecols=dtypes.keys(), dtype=dtypes
     )
 

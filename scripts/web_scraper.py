@@ -207,15 +207,15 @@ def fetch_and_scrape(
 
 
 def save_data(data: list[dict], date_str: str) -> None:
-    """Saves the scraped data to a CSV file."""
+    """Saves the scraped data to a Parquet file."""
     if not data:
         print("No data was scraped. Nothing to save.")
         return
 
     df = pd.DataFrame(data).drop_duplicates()
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
-    file_path = RAW_DATA_DIR / f"anime_dump_{date_str}.csv"
-    df.to_csv(file_path, index=False)
+    file_path = RAW_DATA_DIR / f"anime_dump_{date_str}.parquet"
+    df.to_parquet(file_path, index=False)
     print(f"Data successfully saved to {file_path}")
 
 

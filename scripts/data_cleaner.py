@@ -17,7 +17,7 @@ import pandas as pd
 from animate.config import (AVG_EPISODE_DURATION_MINS, FINAL_APP_COLUMNS,
                             MATURE_GENRES, PROCESSED_DATA_DIR, RAW_DATA_DIR,
                             REQ_RAW_COLUMNS)
-from animate.util import fetch_latest_final_csv_path
+from animate.util import fetch_latest_final_parquet_path
 
 
 # Pre-compiled Regex for Mature Genres
@@ -221,9 +221,9 @@ def load_and_validate_data(input_path: Path) -> pd.DataFrame:
         raise FileNotFoundError(f"Error: Input file not found at {input_path}")
     print(f"Loading raw data from {input_path}...")
     try:
-        df = pd.read_csv(input_path, low_memory=False, na_values=["N/A"])
+        df = pd.read_parquet(input_path, low_memory=False, na_values=["N/A"])
     except Exception as e:
-        print(f"Error loading CSV: {e}")
+        print(f"Error loading parquet: {e}")
         raise
     df = clean_column_names(df)
     available_cols = [col for col in REQ_RAW_COLUMNS if col in df.columns]
@@ -306,8 +306,8 @@ def run_cleaning_pipeline() -> None:
     """
 
     # Defining the input and output file dynamically by picking the file with the latest suffix data in it's filename
-    # example: anime_dump_*.csv, where * will be a date string.
-    input_path = fetch_latest_final_csv_path(RAW_DATA_DIR)
+    # example: anime_dump_*.parquet, where * will be a date string.
+    input_path = fetch_latest_final_parquet_path(RAW_DATA_DIR)
     output_path = PROCESSED_DATA_DIR / input_path.name
 
     try:
@@ -317,7 +317,7 @@ def run_cleaning_pipeline() -> None:
         df_final = finalize_dataframe(df)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        df_final.to_csv(output_path, index=False)
+        df_final.to_parquet(output_path, index=False)
         print(f"Successfully cleaned data saved to {output_path}")
         print(f"Final dataset shape: {df_final.shape}")
     except FileNotFoundError as e:
