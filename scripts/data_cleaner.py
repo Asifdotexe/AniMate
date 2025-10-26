@@ -9,6 +9,7 @@ import pstats
 import re
 import traceback
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,32 @@ from animate.config import (AVG_EPISODE_DURATION_MINS, FINAL_APP_COLUMNS,
                             MATURE_GENRES, PROCESSED_DATA_DIR, RAW_DATA_DIR,
                             REQ_RAW_COLUMNS)
 from animate.util import fetch_latest_final_csv_path
+
+
+# Pre-compiled Regex for Mature Genres
+_MATURE_PATTERN_RE: Optional[re.Pattern] = None
+# Pre-compiled Regex for Synopsis Placeholders
+_SYNOPSIS_PLACEHOLDER_PATTERN: Optional[re.Pattern] = None
+
+if MATURE_GENRES:
+    pattern_str = r'\b(?:' + '|'.join(re.escape(g) for g in MATURE_GENRES) + r')\b'
+    try:
+        _MATURE_PATTERN_RE = re.compile(pattern_str, re.IGNORECASE) # Compile case-insensitively
+    except re.error as e:
+        print(f"Error compiling mature genre regex: {e}. Filtering will be skipped.")
+
+# Compile synopsis patterns as well
+_synopsis_patterns_list = [
+    r'^\(No synopsis yet\.\)$', # Match exact string
+    r'^No synopsis has been added.*', # Match start of string
+    r'^N/A$' # Match exact 'N/A'
+]
+try:
+    # Combine patterns into one regex for single replacement call
+    # Ensure each original pattern is treated as a group for the OR |
+    _SYNOPSIS_PLACEHOLDER_PATTERN = re.compile('|'.join(f"(?:{p})" for p in _synopsis_patterns_list))
+except re.error as e:
+     print(f"Error compiling synopsis placeholder regex: {e}. Cleaning might be incomplete.")
 
 
 def clean_column_names(df: pd.DataFrame) -> pd.DataFrame:
@@ -142,16 +169,19 @@ def clean_synopsis(series: pd.Series) -> pd.Series:
     :param series: Pandas series that needs to be cleaned
     :return: Cleaned pandas synopsis series
     """
-    placeholder_patterns = [
-        r"^\(No synopsis yet\.\)$",  # Match exact string
-        r"^No synopsis has been added.*",  # Match start of string
-        r"^N/A$",  # Match exact 'N/A'
-    ]
-    # Apply replacements iteratively or combine regex carefully
-    cleaned_series = series.astype("string").replace(
-        placeholder_patterns, pd.NA, regex=True
-    )
-    return cleaned_series.fillna("").str.strip()
+    if _SYNOPSIS_PLACEHOLDER_PATTERN is None:
+        print("Warning: Synopsis placeholder regex not compiled. Skipping synopsis cleaning.")
+        # Return series as string, fillna just in case
+        return series.astype(str).fillna("").str.strip()
+
+    # Use StringDtype to preserve pd.NA instead of converting to "nan"
+    cleaned_series = series.astype(str).str.replace(
+        _SYNOPSIS_PLACEHOLDER_PATTERN,
+        "",  # Replace with empty string
+        regex=True
+    ).str.strip()
+
+    return cleaned_series.fillna("")
 
 
 def filter_mature(df: pd.DataFrame, genre_column: str = "genres") -> pd.DataFrame:
@@ -162,6 +192,9 @@ def filter_mature(df: pd.DataFrame, genre_column: str = "genres") -> pd.DataFram
     :param genre_column: Optional field if there is any additional genre columns, defaults to 'genres'
     :return: Pandas dataframe post mature content filtering
     """
+    if not MATURE_GENRES or _MATURE_PATTERN_RE is None:
+        return df
+
     if genre_column not in df.columns:
         print(
             f"Warning: Genre column '{genre_column}' not found. Skipping mature content filtering."
@@ -169,19 +202,18 @@ def filter_mature(df: pd.DataFrame, genre_column: str = "genres") -> pd.DataFram
         return df
 
     # Ensure genres are strings and handle NaN
-    genres_str = df[genre_column].fillna("").astype(str).str.lower()
+    genres_str = df[genre_column].fillna("").astype(str)
 
-    # Create a regex pattern for mature words (boundary checks might be useful)
-    # Using word boundaries (\b) to avoid matching substrings within other words
-    mature_pattern = r"\b(?:" + "|".join(re.escape(g) for g in MATURE_GENRES) + r")\b"
+    # If no mature genres defined, skip filtering
+    if not MATURE_GENRES:
+         return df
 
-    # Filter out rows where genres contain mature words
-    mask = ~genres_str.str.contains(mature_pattern, regex=True, na=False)
+    mask = ~genres_str.str.contains(_MATURE_PATTERN_RE, regex=True, na=False)
+
     removed_count = len(df) - mask.sum()
     if removed_count > 0:
         print(f"Removed {removed_count} entries with mature genres.")
     return df[mask]
-
 
 def load_and_validate_data(input_path: Path) -> pd.DataFrame:
     """Loads raw data, validates path, cleans columns, selects initial columns."""
