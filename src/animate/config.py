@@ -37,4 +37,6 @@ AVG_EPISODE_DURATION_MINS = 23
 MATURE_GENRES = frozenset(['hentai', 'ecchi', 'erotica', 'adult themes'])
 # These columns are essential for the current recommendation engine,
 # hence this is the bare minimum data to make the datapoint useful.
-REQUIRED_COLUMNS = frozenset(['title', 'synopsis'])
+REQ_RAW_COLUMNS = frozenset([
+    'title', 'release_year', 'synopsis', 'episodes', 'genres', 'studio', 'source', 'demographic', 'rating'
+])
