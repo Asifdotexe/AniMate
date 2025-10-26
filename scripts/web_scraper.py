@@ -21,7 +21,7 @@ from tqdm import tqdm
 from urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
 
-from animate.config import SCRAPER_REQUEST_TIMEOUT, SCRAPER_MAX_WORKERS, RAW_DATA_DIR, genre_url
+from animate.config import MYANIMELIST_BASE_URL, SCRAPER_REQUEST_TIMEOUT, SCRAPER_MAX_WORKERS, RAW_DATA_DIR
 
 
 def get_current_date() -> str:
@@ -48,6 +48,14 @@ def safe_float(element, default: str = "N/A") -> float | str:
         return float(element.text.strip()) if element else default
     except (ValueError, AttributeError):
         return default
+
+
+def _genre_url(genre_id: int) -> str:
+    """Constructs a MyAnimeList genre URL with trailing slash.
+    :param genre_id: Ingests the genre id
+    :returns: URL to scrape
+    """
+    return f"{MYANIMELIST_BASE_URL}{genre_id}/"
 
 
 def _get_basic_info(soup: BeautifulSoup) -> dict:
@@ -243,7 +251,7 @@ def main():
 
         :param genre_list: List containing the specific genres to scrape.
         """
-        url_list = [genre_url(genre_id) for genre_id in genre_list]
+        url_list = [_genre_url(genre_id) for genre_id in genre_list]
         current_date = get_current_date()
         all_anime_data = []
 
@@ -285,7 +293,8 @@ def main():
 
     else:
         all_genres = list(range(1, 44))
-        _run_scraper(all_genres)  # Use all genres for normal run
+        # Use all genres for normal run
+        _run_scraper(all_genres)
         print("\n--- SCRAPING COMPLETE ---")
 
 
