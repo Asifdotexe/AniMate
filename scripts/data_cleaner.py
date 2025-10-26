@@ -36,28 +36,49 @@ def clean_numeric_columns(series: pd.Series, target_type=float) -> pd.Series:
     Converts a Series to a numeric type, coercing errors to NaN.
 
     :param series: Pandas series that needs to be cleaned
-    :param target: The datatype of the column we want to convert the existing column to
+    :param target_type: Target dtype hint (e.g., int or float)
     :return: Cleaned pandas series
     """
-    # Converting the errors to np.nan
-    numeric_series = pd.to_numeric(series, errors="coerce")
-    # Convert to the desired integer type if possible (e.g., float -> Int64)
-    if pd.api.types.is_integer_dtype(target_type) and not numeric_series.isnull().any():
-        # Use nullable integer type Int64 to handle potential NaNs introduced by coerce
-        # If no NaNs remain after coerce, can convert safely.
-        # However, if NaNs *might* exist, better to keep as float or use pd.Int64Dtype()
+    # Replace 'N/A' string with actual NaN before conversion
+    # Ensure it's string type first to use .replace reliably
+    if pd.api.types.is_string_dtype(series) or pd.api.types.is_object_dtype(series):
+        series = series.replace('N/A', np.nan)
+
+    # Convert, turning errors into NaN. Result is usually float64 if NaNs occur.
+    numeric_series = pd.to_numeric(series, errors='coerce')
+
+    # Check if the target type is specifically integer.
+    if target_type is int:
+        mask = pd.notna(numeric_series)
+        if not mask.any():
+            try:
+                return numeric_series.astype(pd.Int64Dtype())
+            except Exception:
+                return numeric_series
+
+    # Check if all finite values are whole numbers
+    # Using modulo operator: x % 1 == 0 for integers
+    # Or comparing with integer version: x.astype(int) == x
+    # The modulo approach is generally safer with potential floating point inaccuracies
+    is_integral = (numeric_series[mask] % 1 == 0).all()
+
+    # If all non-NaN values are integral, cast to nullable Int64.
+    if is_integral:
         try:
-            # Use nullable integer type Int64 to handle potential NaNs
+            # Use nullable integer type Int64, works even if NaNs are present.
             return numeric_series.astype(pd.Int64Dtype())
-        except TypeError:
-            # Keep as float if conversion fails (e.g., due to remaining NaNs)
+        except Exception as e:
+            print(f"Warning: Could not cast to Int64 despite integral check: {e}. Keeping as float.")
             pass
 
-    elif pd.api.types.is_float_dtype(target_type):
-        # Ensure it's standard float
-        return numeric_series.astype(float)
-    return numeric_series
+    if pd.api.types.is_float_dtype(target_type) or target_type is int:
+        try:
+            return numeric_series.astype(float)
+        except:
+            print(f"Warning: Could not cast to float: {e}. Returning original numeric series.")
+            return numeric_series
 
+    return numeric_series
 
 def calculate_duration_features(
     no_of_episodes: pd.Series, avg_duration: int
