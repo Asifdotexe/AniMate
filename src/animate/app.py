@@ -18,7 +18,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 from tqdm import tqdm
 
-from animate.config import FINAL_DATA_PATH
+from animate.config import PROCESSED_DATA_DIR
 
 # Download necessary NLTK data
 try:
@@ -61,7 +61,7 @@ def load_data() -> pd.DataFrame:
         "image_url": "string",
     }
     # Corrected the file path to be relative to the app.py location
-    return pd.read_parquet(FINAL_DATA_PATH)
+    return pd.read_parquet(PROCESSED_DATA_DIR)
 
 
 stop_words = set(stopwords.words("english"))
@@ -273,20 +273,11 @@ else:
     if st.button("Get Recommendations"):
         if user_prompt.strip():
 
-            # --- PROFILING CODE START ---
-            # 1. Initialize the profiler
-            profiler = cProfile.Profile()
-            profiler.enable()
-
             # 2. Run the recommendation pipeline
             with st.spinner(random.choice(loading_phrases)):
                 recommended_animes = anime_recommendation_pipeline(
                     user_prompt, num_recommendations
                 )
-
-            # 3. Stop the profiler
-            profiler.disable()
-            # --- PROFILING CODE END ---
 
             st.write("### Recommendations based on your input:")
 
@@ -319,23 +310,6 @@ else:
                                     st.write(
                                         f"**{column.replace('_', ' ').title()}:** {value}"
                                     )
-
-            # --- PROFILING DISPLAY START ---
-            # 4. Format and display the profiling statistics
-            st.write("---")
-            st.subheader("📈 Performance Profile")
-
-            # Create a string stream to capture pstats output
-            s = io.StringIO()
-            # Sort stats by cumulative time
-            sortby = pstats.SortKey.CUMULATIVE
-            ps = pstats.Stats(profiler, stream=s).sort_stats(sortby)
-            ps.print_stats()
-
-            # Display the stats in an expander
-            with st.expander("Click to see profiling details"):
-                st.code(s.getvalue())
-            # --- PROFILING DISPLAY END ---
 
         else:
             st.warning("Please enter a valid query to get recommendations.")

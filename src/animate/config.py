@@ -22,7 +22,7 @@ MYANIMELIST_BASE_URL = "https://myanimelist.net/anime/genre/"
 
 # used in src/animate/app.py
 # This is the maxiumum amount of features for TFIDF vectorzor
-MAX_FEATURES = 5000
+MAX_FEATURES = 3000
 # Number of neighbors
 N_NEIGHBORS = 5
 
