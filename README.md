@@ -6,7 +6,8 @@
 
 To get started with AniMate, you need to install the following software:
 
-- **Anaconda**: A free and open-source distribution of Python. [Download Anaconda for Windows](https://www.anaconda.com/products/distribution).
+- **Python**: Ensure you have Python 3.11 or higher installed. [Download Python](https://www.python.org/downloads/).
+- **Poetry**: A tool for dependency management and packaging in Python. [Install Poetry](https://python-poetry.org/docs/#installation).
 - **Git**: A version control system to manage your codebase. [Download Git for Windows](https://git-scm.com/download/win).
 
 ### Clone the Repository
@@ -17,7 +18,7 @@ To clone the repository, follow these steps:
 2. Run the following command:
 
     ```bash
-    https://github.com/Asifdotexe/AniMate.git
+    git clone https://github.com/Asifdotexe/AniMate.git
     ```
 
 3. Navigate to the project directory:
@@ -26,24 +27,18 @@ To clone the repository, follow these steps:
     cd AniMate
     ```
 
-### Create the Virtual Environment
+### Install Dependencies
 
-1. Create a Conda virtual environment with the specific Python version:
+1. Install project dependencies using Poetry:
 
     ```bash
-    conda create --name animate python=3.11
+    poetry install
     ```
 
-2. Activate the virtual environment:
+2. Run the application:
 
     ```bash
-    conda activate animate
-    ```
-
-3. Install project dependencies:
-
-    ```bash
-    pip install -r requirements.txt
+    poetry run streamlit run app.py
     ```
 
 ## Contributing
