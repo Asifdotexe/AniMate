@@ -6,7 +6,7 @@
 
 To get started with AniMate, you need to install the following software:
 
-- **Python**: Ensure you have Python 3.10 or higher installed. [Download Python](https://www.python.org/downloads/).
+- **Python**: Ensure you have Python 3.11 or higher installed. [Download Python](https://www.python.org/downloads/).
 - **Poetry**: A tool for dependency management and packaging in Python. [Install Poetry](https://python-poetry.org/docs/#installation).
 - **Git**: A version control system to manage your codebase. [Download Git for Windows](https://git-scm.com/download/win).
 
