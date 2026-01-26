@@ -12,16 +12,19 @@ from src import engine
 
 @pytest.fixture
 def mock_data():
+    """Create a mock DataFrame for testing."""
     return pd.DataFrame(
         {
             "title": ["Anime A", "Anime B", "Anime C"],
             "synopsis": ["Synopsis A", "Synopsis B", "Synopsis C"],
-            "other_cols": [1, 2, 3],  # Simulating other columns
+            # Simulating other columns
+            "other_cols": [1, 2, 3],
         }
     )
 
 
 def test_load_data(tmp_path):
+    """Test loading data from a CSV file."""
     # Create valid dummy csv
     csv_file = tmp_path / "data.csv"
     csv_file.write_text("col1,col2\n1,2", encoding="utf-8")
@@ -34,6 +37,7 @@ def test_load_data(tmp_path):
 
 
 def test_vectorize_and_build_model(mock_data):
+    """Test vectorizing data and building the KNN model."""
     config = {"max_features": 10, "n_neighbors": 2, "metric": "cosine"}
 
     knn_model, tfidf_vectorizer = engine.vectorize_and_build_model(mock_data, config)
@@ -48,11 +52,13 @@ def test_vectorize_and_build_model(mock_data):
 
 @patch("src.engine.preprocess_text")
 def test_get_recommendations(mock_preprocess, mock_data):
+    """Test getting recommendations based on a query."""
     mock_preprocess.return_value = "processed query"
 
     # Mock Vectorizer
     mock_vectorizer = MagicMock()
-    mock_vectorizer.transform.return_value = [[1, 0, 0]]  # Dummy vector
+    # Dummy vector
+    mock_vectorizer.transform.return_value = [[1, 0, 0]]
 
     # Mock KNN Model
     mock_knn = MagicMock()
@@ -94,6 +100,7 @@ def test_get_recommendations(mock_preprocess, mock_data):
 @patch("os.path.exists")
 @patch("joblib.load")
 def test_load_models_success(mock_joblib_load, mock_exists):
+    """Test successful loading of models."""
     mock_exists.return_value = True
     mock_joblib_load.side_effect = ["knn_model", "tfidf_vectorizer"]
 
@@ -106,6 +113,7 @@ def test_load_models_success(mock_joblib_load, mock_exists):
 
 @patch("os.path.exists")
 def test_load_models_file_not_found(mock_exists):
+    """Test that FileNotFoundError is raised when models are missing."""
     mock_exists.return_value = False
 
     with pytest.raises(FileNotFoundError):
@@ -115,6 +123,7 @@ def test_load_models_file_not_found(mock_exists):
 @patch("os.path.exists")
 @patch("pandas.read_pickle")
 def test_load_processed_data(mock_read_pickle, mock_exists):
+    """Test loading of processed data."""
     mock_exists.return_value = True
     mock_read_pickle.return_value = pd.DataFrame({"col": [1, 2]})
 

@@ -1,12 +1,10 @@
 """
-Module that contains the test cases for the train_model module.
+Module for testing the training script.
 """
 
 import os
 import sys
 from unittest.mock import MagicMock, mock_open, patch
-
-import pytest
 
 from train_model import train
 
@@ -27,8 +25,12 @@ if scripts_path not in sys.path:
 )
 @patch("yaml.safe_load")
 def test_train_model(
-    mock_yaml, mock_file, mock_load_data, mock_vectorize, mock_dump, mock_makedirs
+    mock_yaml, mock_load_data, mock_vectorize, mock_dump, mock_makedirs
 ):
+    """
+    Test the training script execution, verifying that data loading, model training,
+    and artifact saving are orchestrated correctly.
+    """
     # Setup mocks
     mock_yaml.return_value = {
         "data": {"file_path": "data.csv", "dtypes": {}},

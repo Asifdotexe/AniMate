@@ -17,7 +17,17 @@ project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-data = pd.read_csv(r"..\..\..\data\final\processed_data_02092024.csv")
+
+def load_data() -> pd.DataFrame:
+    """
+    Load the anime data from the CSV file.
+
+    :return: DataFrame containing the anime data.
+    """
+    data_path = os.path.join(
+        project_root, "data", "final", "processed_data_02092024.csv"
+    )
+    return pd.read_csv(data_path)
 
 
 def vectorize(df: pd.DataFrame) -> tuple[pd.DataFrame, TfidfVectorizer]:
