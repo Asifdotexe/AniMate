@@ -89,3 +89,36 @@ def test_get_recommendations(mock_preprocess, mock_data):
 
     # Verify sorting: Anime A (9.0) > Anime C (7.0)
     assert recs.iloc[0]["title"] == "Anime A"
+
+
+@patch("os.path.exists")
+@patch("joblib.load")
+def test_load_models_success(mock_joblib_load, mock_exists):
+    mock_exists.return_value = True
+    mock_joblib_load.side_effect = ["knn_model", "tfidf_vectorizer"]
+
+    knn, vectorizer = engine.load_models("models")
+
+    assert knn == "knn_model"
+    assert vectorizer == "tfidf_vectorizer"
+    assert mock_joblib_load.call_count == 2
+
+
+@patch("os.path.exists")
+def test_load_models_file_not_found(mock_exists):
+    mock_exists.return_value = False
+
+    with pytest.raises(FileNotFoundError):
+        engine.load_models("models")
+
+
+@patch("os.path.exists")
+@patch("pandas.read_pickle")
+def test_load_processed_data(mock_read_pickle, mock_exists):
+    mock_exists.return_value = True
+    mock_read_pickle.return_value = pd.DataFrame({"col": [1, 2]})
+
+    df = engine.load_processed_data("models")
+
+    assert not df.empty
+    assert list(df.columns) == ["col"]
