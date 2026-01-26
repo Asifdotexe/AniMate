@@ -20,6 +20,7 @@ pandas = "^2.3.3"
 nltk = "^3.9.2"
 scikit-learn = "^1.8.0"
 psutil = "^7.2.1"
+pyyaml = "^6.0.3"
 
 [tool.poetry.group.dev.dependencies]
 requests = "^2.32.5"
@@ -31,6 +32,13 @@ black = "^25.9.0"
 isort = "^6.1.0"
 pre-commit = "^4.3.0"
 pytest = "^8.4.2"
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = ["redefined-outer-name", "invalid-name", "assignment-from-no-return", "too-many-branches",
+           "unused-argument", "unnecessary-pass", "fixme", "too-few-public-methods"]
 
 [build-system]
 requires = ["poetry-core"]
