@@ -52,6 +52,48 @@ def vectorize_and_build_model(
     return knn_model, tfidf_vectorizer
 
 
+def load_models(model_dir: str) -> tuple[NearestNeighbors, TfidfVectorizer]:
+    """
+    Load pre-trained model and vectorizer from the specified directory.
+
+    :param model_dir: Directory containing the .joblib files.
+    :return: A tuple containing the k-NN model and the TF-IDF vectorizer.
+    """
+    import os
+
+    import joblib
+
+    knn_path = os.path.join(model_dir, "knn_model.joblib")
+    tfidf_path = os.path.join(model_dir, "tfidf_vectorizer.joblib")
+
+    if not os.path.exists(knn_path) or not os.path.exists(tfidf_path):
+        raise FileNotFoundError(
+            f"Model artifacts not found in {model_dir}. Please run scripts/train_model.py first."
+        )
+
+    knn_model = joblib.load(knn_path)
+    tfidf_vectorizer = joblib.load(tfidf_path)
+
+    return knn_model, tfidf_vectorizer
+
+
+def load_processed_data(model_dir: str) -> pd.DataFrame:
+    """
+    Load the processed dataframe from the model directory.
+
+    :param model_dir: Directory containing the .pkl file.
+    :return: The processed dataframe.
+    """
+    import os
+
+    data_path = os.path.join(model_dir, "processed_data.pkl")
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(
+            f"Processed data not found in {model_dir}. Please run scripts/train_model.py first."
+        )
+    return pd.read_pickle(data_path)
+
+
 def get_recommendations(
     query: str,
     tfidf_vectorizer: TfidfVectorizer,
