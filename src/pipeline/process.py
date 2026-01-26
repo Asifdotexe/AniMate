@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from src.preprocessing import preprocess_text
 
-
 # Add project root to sys.path to import src modules
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))

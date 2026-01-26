@@ -2,30 +2,32 @@
 Module for testing the training script.
 """
 
-import os
-import sys
 from unittest.mock import MagicMock, mock_open, patch
 
-from train_model import train
-
-# Ensure scripts can be imported
-scripts_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scripts"))
-if scripts_path not in sys.path:
-    sys.path.append(scripts_path)
+from src.pipeline.train import train
 
 
 @patch("os.makedirs")
 @patch("joblib.dump")
-@patch("src.engine.vectorize_and_build_model")
-@patch("src.engine.load_data")
+@patch("src.pipeline.train.NearestNeighbors")
+@patch("src.pipeline.train.TfidfVectorizer")
+@patch("pandas.read_csv")
+@patch("os.path.exists")
 @patch(
     "builtins.open",
     new_callable=mock_open,
-    read_data="data:\n  file_path: path\n  dtypes: {}\nmodel: {}",
+    read_data="model:\n  max_features: 100\n  n_neighbors: 5\n",
 )
 @patch("yaml.safe_load")
 def test_train_model(
-    mock_yaml, mock_load_data, mock_vectorize, mock_dump, mock_makedirs
+    mock_yaml,
+    mock_open_file,
+    mock_exists,
+    mock_read_csv,
+    mock_tfidf,
+    mock_knn,
+    mock_dump,
+    mock_makedirs,
 ):
     """
     Test the training script execution, verifying that data loading, model training,
@@ -33,23 +35,32 @@ def test_train_model(
     """
     # Setup mocks
     mock_yaml.return_value = {
-        "data": {"file_path": "data.csv", "dtypes": {}},
-        "model": {},
+        "model": {"max_features": 100, "n_neighbors": 5, "metric": "cosine"}
     }
+    mock_exists.return_value = True  # Processed data exists
 
+    # Mock DataFrame
     mock_df = MagicMock()
-    mock_load_data.return_value = mock_df
+    mock_df.columns = ["Title", "Synopsis"]
+    # Mock apply for stemming
+    mock_df.__getitem__.return_value = mock_df  # simplistic
+    mock_read_csv.return_value = mock_df
 
-    mock_knn = MagicMock()
-    mock_vectorizer = MagicMock()
-    mock_vectorize.return_value = (mock_knn, mock_vectorizer)
+    # Mock Vectorizer and KNN
+    mock_vectorizer_instance = MagicMock()
+    mock_tfidf.return_value = mock_vectorizer_instance
+    mock_vectorizer_instance.fit_transform.return_value = "tfidf_matrix"
+
+    mock_knn_instance = MagicMock()
+    mock_knn.return_value = mock_knn_instance
 
     # Run train function
     train()
 
     # Verify logic
-    mock_load_data.assert_called_once()
-    mock_vectorize.assert_called_once_with(mock_df, {})
+    mock_read_csv.assert_called_once()
+    mock_tfidf.assert_called_once()
+    mock_knn.assert_called_once()
 
     # Check if artifacts were saved.
     assert mock_dump.call_count == 2

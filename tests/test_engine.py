@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from src import engine
+from src.inference import engine
 
 
 @pytest.fixture
@@ -23,34 +23,7 @@ def mock_data():
     )
 
 
-def test_load_data(tmp_path):
-    """Test loading data from a CSV file."""
-    # Create valid dummy csv
-    csv_file = tmp_path / "data.csv"
-    csv_file.write_text("col1,col2\n1,2", encoding="utf-8")
-
-    dtypes = {"col1": int, "col2": int}
-    df = engine.load_data(str(csv_file), dtypes)
-
-    assert not df.empty
-    assert list(df.columns) == ["col1", "col2"]
-
-
-def test_vectorize_and_build_model(mock_data):
-    """Test vectorizing data and building the KNN model."""
-    config = {"max_features": 10, "n_neighbors": 2, "metric": "cosine"}
-
-    knn_model, tfidf_vectorizer = engine.vectorize_and_build_model(mock_data, config)
-
-    # Check if a column was added (stemmed_synopsis)
-    assert "stemmed_synopsis" in mock_data.columns
-
-    # Check return types (basic check)
-    assert hasattr(knn_model, "kneighbors")
-    assert hasattr(tfidf_vectorizer, "transform")
-
-
-@patch("src.engine.preprocess_text")
+@patch("src.inference.engine.preprocess_text")
 def test_get_recommendations(mock_preprocess, mock_data):
     """Test getting recommendations based on a query."""
     mock_preprocess.return_value = "processed query"

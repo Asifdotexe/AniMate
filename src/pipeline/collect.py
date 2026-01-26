@@ -5,7 +5,6 @@ This script scrapes data and saves it to the data/raw directory.
 
 import os
 import re
-import sys
 import time
 from datetime import datetime
 from typing import Dict, List, Tuple
