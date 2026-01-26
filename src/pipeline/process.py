@@ -11,13 +11,14 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
+from src.preprocessing import preprocess_text
+
+
 # Add project root to sys.path to import src modules
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
-
-from src.preprocessing import preprocess_text
 
 
 def get_latest_raw_file(raw_dir: str) -> str:
@@ -43,17 +44,19 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     # Drop duplicates
     df = df.drop_duplicates(subset=["Title"])
-    
+
     # Drop rows with missing synopsis as it's critical for recommendation
     df = df.dropna(subset=["Synopsis"])
-    
+
     # Fill other NaNs with defaults
     df["Episodes"] = df["Episodes"].fillna("N/A")
-    df["Score"] = df["Rating"].fillna(0) # Rename Rating to Score if needed or keep consistent
-    
+    df["Score"] = df["Rating"].fillna(
+        0
+    )  # Rename Rating to Score if needed or keep consistent
+
     # Ensure Score is numeric
     df["Score"] = pd.to_numeric(df["Rating"], errors="coerce").fillna(0)
-    
+
     return df
 
 
@@ -90,7 +93,6 @@ def main():
     df = pd.read_csv(raw_file)
     print(f"Loaded {len(df)} rows.")
 
-    
     # Clean column names
     df.columns = df.columns.str.strip()
 
@@ -98,7 +100,7 @@ def main():
     print(f"Cleaned data: {len(df_clean)} rows.")
 
     df_processed = process_features(df_clean)
-    
+
     output_path = os.path.join(processed_dir, "anime_data_processed.csv")
     df_processed.to_csv(output_path, index=False)
     print(f"Processed data saved to {output_path}")

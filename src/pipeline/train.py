@@ -13,13 +13,14 @@ import yaml
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 
+from src.preprocessing import preprocess_text
+
+
 # Add project root to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
-
-from src.preprocessing import preprocess_text
 
 
 def load_config() -> dict:
@@ -42,7 +43,7 @@ def train():
     processed_data_path = os.path.join(
         project_root, "data", "processed", "anime_data_processed.csv"
     )
-    
+
     if not os.path.exists(processed_data_path):
         print(f"Error: Processed data not found at {processed_data_path}")
         print("Please run src/pipeline/process.py first.")
@@ -51,7 +52,7 @@ def train():
     # Load data. We assume types are inferred correctly or we can use dtypes from config if applicable.
     # But since it's processed CSV, we just load it.
     df = pd.read_csv(processed_data_path)
-    
+
     # Check if 'stemmed_synopsis' exists, if not create it (backward compatibility or safety)
     if "stemmed_synopsis" not in df.columns:
         print("stemmed_synopsis column missing, generating it...")
@@ -64,16 +65,15 @@ def train():
 
     print("Vectorizing and building model...")
     model_cfg = config.get("model", {})
-    
+
     tfidf_vectorizer = TfidfVectorizer(
-        stop_words="english", 
-        max_features=model_cfg.get("max_features", 5000)
+        stop_words="english", max_features=model_cfg.get("max_features", 5000)
     )
     tfidf_matrix = tfidf_vectorizer.fit_transform(df["stemmed_synopsis"])
 
     knn_model = NearestNeighbors(
-        n_neighbors=model_cfg.get("n_neighbors", 5), 
-        metric=model_cfg.get("metric", "cosine")
+        n_neighbors=model_cfg.get("n_neighbors", 5),
+        metric=model_cfg.get("metric", "cosine"),
     ).fit(tfidf_matrix)
 
     print("Saving artifacts...")
@@ -82,7 +82,7 @@ def train():
 
     joblib.dump(knn_model, os.path.join(models_dir, "knn_model.joblib"))
     joblib.dump(tfidf_vectorizer, os.path.join(models_dir, "tfidf_vectorizer.joblib"))
-    
+
     # Save the dataframe as pickle for fast loading in app
     # The app needs the full dataframe to display results
     df.to_pickle(os.path.join(models_dir, "processed_data.pkl"))

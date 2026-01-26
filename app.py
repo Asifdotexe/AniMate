@@ -9,8 +9,8 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from src.inference import engine
 from src import utils
+from src.inference import engine
 
 # Load configuration
 with open(file="config.yaml", mode="r", encoding="utf-8") as file:

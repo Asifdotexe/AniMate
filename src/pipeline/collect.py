@@ -269,12 +269,12 @@ def save_data(date: str, data: List[Dict[str, str]]) -> None:
 
     df = pd.DataFrame(data)
     df.drop_duplicates(inplace=True)
-    
+
     # Ensure data/raw exists
     # Assuming script is run from project root
     output_dir = os.path.join("data", "raw")
     os.makedirs(output_dir, exist_ok=True)
-    
+
     output_path = os.path.join(output_dir, f"AnimeData_{date}.csv")
     df.to_csv(output_path, index=False)
     print(f"Data saved to {output_path}")
@@ -294,13 +294,13 @@ def main():
     # Check if we should LIMIT the scrape for testing purposes
     # Ideally passed via args, but for now we default to the original behavior
     # For a quick test, we might want to reduce this, but let's keep original behavior.
-    
+
     print(f"Starting scrape for {len(url_list)} genres...")
 
     for url in tqdm(url_list, desc="Genres"):
-        # Limited page limit for safety in automated run context, 
-        # but user likely wants full scrape. 
-        # However, 100 pages * 43 genres is HUGE. 
+        # Limited page limit for safety in automated run context,
+        # but user likely wants full scrape.
+        # However, 100 pages * 43 genres is HUGE.
         # I will stick to the original code's limit of 100.
         scraped_data = fetch_and_scrape(url, page_limit=100)
         all_anime_data.extend(scraped_data)
