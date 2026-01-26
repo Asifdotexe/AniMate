@@ -36,6 +36,8 @@ def preprocess_text(text: str) -> str:
 
     :returns: The processed text as a single string after tokenization, stemming, and stopword removal.
     """
+    if not text or not isinstance(text, str):
+        return ""
     tokens = word_tokenize(text.lower())
     processed = [
         stemmer.stem(word)

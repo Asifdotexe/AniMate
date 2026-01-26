@@ -89,6 +89,12 @@ def get_recommendations(
     if filtered_recommendations.empty:
         filtered_recommendations = recommendations
 
+    if "score" not in filtered_recommendations.columns:
+        raise ValueError(
+            "The 'score' column is missing from the DataFrame "
+            "'filtered_recommendations'. Cannot sort recommendations."
+        )
+
     final_recommendations = filtered_recommendations.sort_values(
         by="score", ascending=False
     ).head(top_n)

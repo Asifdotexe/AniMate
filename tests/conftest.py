@@ -1,8 +1,9 @@
 """
 Module that contains the test cases for the conftest module.
 """
-import sys
+
 import os
+import sys
 
 # Add the project root to sys.path so we can import src
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))

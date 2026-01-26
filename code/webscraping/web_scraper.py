@@ -147,9 +147,12 @@ def _extract_themes(properties_div: bs) -> str:
 
 
 def _extract_rating(soup: bs) -> float:
-    return safe_float(
-        soup.find("div", class_="scormem-item score score-label score-8"), "N/A"
+    # Find div with class matching "scormem-item score score-label score-X"
+    # We use regex to match the pattern because the trailing number varies
+    rating_div = soup.find(
+        "div", class_=re.compile(r"scormem-item score score-label score-\d+")
     )
+    return safe_float(rating_div, "N/A")
 
 
 def _extract_voters(soup: bs) -> int:
@@ -214,10 +217,12 @@ def _fetch_page_data(
             soup = bs(response.content, "html.parser")
             anime_list = soup.find_all("div", class_="js-anime-category-producer")
             return [scrape_anime_item(str(item)) for item in anime_list], False
-        except requests.HTTPError:
-            if response.status_code == 404:
+        except requests.HTTPError as e:
+            # Safely access response from exception if available
+            resp = getattr(e, "response", None)
+            if resp is not None and resp.status_code == 404:
                 return [], True
-            print(f"Error fetching {page_url}. Retrying in {delay} seconds...")
+            print(f"Error fetching {page_url}: {e}. Retrying in {delay} seconds...")
             time.sleep(delay)
         except requests.RequestException as e:
             print(f"Error fetching {page_url}: {e}. Retrying in {delay} seconds...")
