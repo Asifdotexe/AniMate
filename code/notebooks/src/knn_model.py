@@ -17,7 +17,25 @@ project_root = os.path.abspath(os.path.join(current_dir, "..", "..", ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-data = pd.read_csv(r"..\..\..\data\final\processed_data_02092024.csv")
+
+def load_data(data_path: str = None) -> pd.DataFrame:
+    """
+    Load the anime data from the CSV file.
+
+    :param data_path: Optional path to the CSV file. If not provided,
+                      looks for 'anime_data_processed.csv' in 'data/processed'.
+    :return: DataFrame containing the anime data.
+    :raises FileNotFoundError: If the data file does not exist.
+    """
+    if data_path is None:
+        data_path = os.path.join(
+            project_root, "data", "processed", "anime_data_processed.csv"
+        )
+
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Data file not found at: {data_path}")
+
+    return pd.read_csv(data_path)
 
 
 def vectorize(df: pd.DataFrame) -> tuple[pd.DataFrame, TfidfVectorizer]:

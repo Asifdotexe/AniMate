@@ -7,52 +7,31 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from src import engine
+from src.inference import engine
 
 
 @pytest.fixture
 def mock_data():
+    """Create a mock DataFrame for testing."""
     return pd.DataFrame(
         {
             "title": ["Anime A", "Anime B", "Anime C"],
             "synopsis": ["Synopsis A", "Synopsis B", "Synopsis C"],
-            "other_cols": [1, 2, 3],  # Simulating other columns
+            # Simulating other columns
+            "other_cols": [1, 2, 3],
         }
     )
 
 
-def test_load_data(tmp_path):
-    # Create valid dummy csv
-    csv_file = tmp_path / "data.csv"
-    csv_file.write_text("col1,col2\n1,2", encoding="utf-8")
-
-    dtypes = {"col1": int, "col2": int}
-    df = engine.load_data(str(csv_file), dtypes)
-
-    assert not df.empty
-    assert list(df.columns) == ["col1", "col2"]
-
-
-def test_vectorize_and_build_model(mock_data):
-    config = {"max_features": 10, "n_neighbors": 2, "metric": "cosine"}
-
-    knn_model, tfidf_vectorizer = engine.vectorize_and_build_model(mock_data, config)
-
-    # Check if a column was added (stemmed_synopsis)
-    assert "stemmed_synopsis" in mock_data.columns
-
-    # Check return types (basic check)
-    assert hasattr(knn_model, "kneighbors")
-    assert hasattr(tfidf_vectorizer, "transform")
-
-
-@patch("src.engine.preprocess_text")
+@patch("src.inference.engine.preprocess_text")
 def test_get_recommendations(mock_preprocess, mock_data):
+    """Test getting recommendations based on a query."""
     mock_preprocess.return_value = "processed query"
 
     # Mock Vectorizer
     mock_vectorizer = MagicMock()
-    mock_vectorizer.transform.return_value = [[1, 0, 0]]  # Dummy vector
+    # Dummy vector
+    mock_vectorizer.transform.return_value = [[1, 0, 0]]
 
     # Mock KNN Model
     mock_knn = MagicMock()
@@ -89,3 +68,39 @@ def test_get_recommendations(mock_preprocess, mock_data):
 
     # Verify sorting: Anime A (9.0) > Anime C (7.0)
     assert recs.iloc[0]["title"] == "Anime A"
+
+
+@patch("os.path.exists")
+@patch("joblib.load")
+def test_load_models_success(mock_joblib_load, mock_exists):
+    """Test successful loading of models."""
+    mock_exists.return_value = True
+    mock_joblib_load.side_effect = ["knn_model", "tfidf_vectorizer"]
+
+    knn, vectorizer = engine.load_models("models")
+
+    assert knn == "knn_model"
+    assert vectorizer == "tfidf_vectorizer"
+    assert mock_joblib_load.call_count == 2
+
+
+@patch("os.path.exists")
+def test_load_models_file_not_found(mock_exists):
+    """Test that FileNotFoundError is raised when models are missing."""
+    mock_exists.return_value = False
+
+    with pytest.raises(FileNotFoundError):
+        engine.load_models("models")
+
+
+@patch("os.path.exists")
+@patch("pandas.read_pickle")
+def test_load_processed_data(mock_read_pickle, mock_exists):
+    """Test loading of processed data."""
+    mock_exists.return_value = True
+    mock_read_pickle.return_value = pd.DataFrame({"col": [1, 2]})
+
+    df = engine.load_processed_data("models")
+
+    assert not df.empty
+    assert list(df.columns) == ["col"]

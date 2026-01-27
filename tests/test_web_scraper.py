@@ -4,9 +4,9 @@ Module that contains the test cases for the web scraper module.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from requests import HTTPError
-from web_scraper import _fetch_page_data, scrape_anime_item
+
+from src.pipeline.collect import _fetch_page_data, scrape_anime_item
 
 sample_html = """
 <div class="js-anime-category-producer">
@@ -35,6 +35,9 @@ sample_html = """
 
 
 def test_scrape_anime_item():
+    """
+    Test that scrape_anime_item correctly extracts data from HTML.
+    """
     data = scrape_anime_item(sample_html)
     assert data["Title"] == "Test Anime"
     assert data["Episodes"] == "12"
@@ -42,8 +45,11 @@ def test_scrape_anime_item():
     assert data["Rating"] == 8.52
 
 
-@patch("web_scraper.requests.get")
+@patch("src.pipeline.collect.requests.get")
 def test_fetch_page_data_success(mock_get):
+    """
+    Test that _fetch_page_data calls requests.get and parses the response.
+    """
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.content = sample_html
@@ -56,8 +62,11 @@ def test_fetch_page_data_success(mock_get):
     assert data[0]["Title"] == "Test Anime"
 
 
-@patch("web_scraper.requests.get")
+@patch("src.pipeline.collect.requests.get")
 def test_fetch_page_data_404(mock_get):
+    """
+    Test that _fetch_page_data handles 404 errors correctly.
+    """
     mock_response = MagicMock()
     mock_response.status_code = 404
     # Ensure the exception has the response attached

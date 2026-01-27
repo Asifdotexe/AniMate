@@ -9,7 +9,8 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from src import engine, utils
+from src import utils
+from src.inference import engine
 
 # Load configuration
 with open(file="config.yaml", mode="r", encoding="utf-8") as file:
@@ -29,25 +30,24 @@ if "page" not in st.session_state:
 
 
 # Cache triggers
-@st.cache_data
-def load_data_cached() -> pd.DataFrame:
-    """
-    Load data from the specified file path and return a DataFrame.
-    """
-    return engine.load_data(config["data"]["file_path"], config["data"]["dtypes"])
-
-
 @st.cache_resource
-def build_model_cached(df: pd.DataFrame):
+def load_resources():
     """
-    Build a KNN model using the TF-IDF vectorizer and the specified configuration.
+    Load the pre-trained model, vectorizer, and processed data.
     """
-    return engine.vectorize_and_build_model(df, config["model"])
+    model_dir = "models"
+    try:
+        data = engine.load_processed_data(model_dir)
+        knn_model, tfidf_vectorizer = engine.load_models(model_dir)
+        return data, knn_model, tfidf_vectorizer
+    except FileNotFoundError as e:
+        st.error(f"Error loading models: {e}")
+        st.info("Run 'python src/pipeline/train.py' to generate model artifacts.")
+        st.stop()
 
 
 # Load data and model
-data = load_data_cached()
-knn_model, tfidf_vectorizer = build_model_cached(data)
+data, knn_model, tfidf_vectorizer = load_resources()
 
 
 def display_memory():
