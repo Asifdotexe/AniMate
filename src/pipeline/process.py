@@ -11,13 +11,13 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 
-from src.preprocessing import preprocess_text
-
 # Add project root to sys.path to import src modules
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
+
+from src.preprocessing import preprocess_text
 
 
 def get_latest_raw_file(raw_dir: str) -> str:

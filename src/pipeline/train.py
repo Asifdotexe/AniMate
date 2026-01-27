@@ -13,13 +13,13 @@ import yaml
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 
-from src.preprocessing import preprocess_text
-
 # Add project root to sys.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
 if project_root not in sys.path:
     sys.path.append(project_root)
+
+from src.preprocessing import preprocess_text
 
 
 def load_config() -> dict:
