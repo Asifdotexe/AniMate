@@ -19,7 +19,7 @@ python src/pipeline/process.py
 ## 3. Model Training
 Train the recommendation model and generate vector artifacts.
 - Saves model to `models/`
-- Saves final vectorizer/data to `models/` (or `data/final` if configured)
+- Saves vectorizer and processed data pickle to `models/`
 
 ```bash
 python src/pipeline/train.py

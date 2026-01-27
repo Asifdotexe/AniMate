@@ -26,7 +26,13 @@ def load_config() -> dict:
     """Load configuration from config.yaml."""
     config_path = os.path.join(project_root, "config.yaml")
     with open(config_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+        if not isinstance(cfg, dict):
+             # Return empty dict if config is invalid or empty to avoid AttributeError later
+             # or we could raise an error. A valid config is usually required, but fail-safe 
+             # empty dict allows get() calls to return defaults.
+             return {}
+        return cfg
 
 
 def train():

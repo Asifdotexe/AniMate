@@ -41,20 +41,32 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     :param df: Raw DataFrame.
     :return: Cleaned DataFrame.
     """
+    # Validate required columns
+    required_columns = ["Title", "Synopsis"]
+    for col in required_columns:
+        if col not in df.columns:
+            raise KeyError(f"Missing required column: {col}")
+
     # Drop duplicates
     df = df.drop_duplicates(subset=["Title"])
 
     # Drop rows with missing synopsis as it's critical for recommendation
     df = df.dropna(subset=["Synopsis"])
 
-    # Fill other NaNs with defaults
-    df["Episodes"] = df["Episodes"].fillna("N/A")
-    df["Score"] = df["Rating"].fillna(
-        0
-    )  # Rename Rating to Score if needed or keep consistent
+    # Handle episodes if it exists
+    if "Episodes" in df.columns:
+        df["Episodes"] = df["Episodes"].fillna("N/A")
 
-    # Ensure Score is numeric
-    df["Score"] = pd.to_numeric(df["Rating"], errors="coerce").fillna(0)
+    # Normalize Score/Rating
+    if "Score" not in df.columns and "Rating" not in df.columns:
+        # Create default if neither exists
+        df["Score"] = 0
+    elif "Score" not in df.columns and "Rating" in df.columns:
+         # Use Rating as Score source
+         df["Score"] = pd.to_numeric(df["Rating"], errors="coerce").fillna(0)
+    elif "Score" in df.columns:
+        # Ensure Score is numeric
+        df["Score"] = pd.to_numeric(df["Score"], errors="coerce").fillna(0)
 
     return df
 

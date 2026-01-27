@@ -42,7 +42,7 @@ def load_resources():
         return data, knn_model, tfidf_vectorizer
     except FileNotFoundError as e:
         st.error(f"Error loading models: {e}")
-        st.info("Run 'python scripts/train_model.py' to generate model artifacts.")
+        st.info("Run 'python src/pipeline/train.py' to generate model artifacts.")
         st.stop()
 
 
