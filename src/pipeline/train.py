@@ -62,8 +62,8 @@ def train():
     if "stemmed_synopsis" not in df.columns:
         print("stemmed_synopsis column missing, generating it...")
         # basic fillna to avoid errors
-        df["Synopsis"] = df["Synopsis"].fillna("")
-        df["stemmed_synopsis"] = df["Synopsis"].apply(preprocess_text)
+        df["synopsis"] = df["synopsis"].fillna("")
+        df["stemmed_synopsis"] = df["synopsis"].apply(preprocess_text)
 
     # Ensure no float/NaN values in text column
     df["stemmed_synopsis"] = df["stemmed_synopsis"].fillna("")

@@ -42,31 +42,33 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     :return: Cleaned DataFrame.
     """
     # Validate required columns
-    required_columns = ["Title", "Synopsis"]
+    # Validate required columns
+    required_columns = ["title", "synopsis"]
     for col in required_columns:
         if col not in df.columns:
             raise KeyError(f"Missing required column: {col}")
 
     # Drop duplicates
-    df = df.drop_duplicates(subset=["Title"])
+    df = df.drop_duplicates(subset=["title"])
 
     # Drop rows with missing synopsis as it's critical for recommendation
-    df = df.dropna(subset=["Synopsis"])
+    df = df.dropna(subset=["synopsis"])
 
     # Handle episodes if it exists
-    if "Episodes" in df.columns:
-        df["Episodes"] = df["Episodes"].fillna("N/A")
+    # Handle episodes if it exists
+    if "episodes" in df.columns:
+        df["episodes"] = df["episodes"].fillna("N/A")
 
     # Normalize Score/Rating
-    if "Score" not in df.columns and "Rating" not in df.columns:
+    if "score" not in df.columns and "rating" not in df.columns:
         # Create default if neither exists
-        df["Score"] = 0
-    elif "Score" not in df.columns and "Rating" in df.columns:
+        df["score"] = 0
+    elif "score" not in df.columns and "rating" in df.columns:
          # Use Rating as Score source
-         df["Score"] = pd.to_numeric(df["Rating"], errors="coerce").fillna(0)
-    elif "Score" in df.columns:
+         df["score"] = pd.to_numeric(df["rating"], errors="coerce").fillna(0)
+    elif "score" in df.columns:
         # Ensure Score is numeric
-        df["Score"] = pd.to_numeric(df["Score"], errors="coerce").fillna(0)
+        df["score"] = pd.to_numeric(df["score"], errors="coerce").fillna(0)
 
     return df
 
@@ -79,7 +81,8 @@ def process_features(df: pd.DataFrame) -> pd.DataFrame:
     :return: DataFrame with additional feature columns.
     """
     tqdm.pandas(desc="Preprocessing Synopsis")
-    df["stemmed_synopsis"] = df["Synopsis"].progress_apply(preprocess_text)
+    tqdm.pandas(desc="Preprocessing Synopsis")
+    df["stemmed_synopsis"] = df["synopsis"].progress_apply(preprocess_text)
     return df
 
 
@@ -105,7 +108,7 @@ def main():
     print(f"Loaded {len(df)} rows.")
 
     # Clean column names
-    df.columns = df.columns.str.strip()
+    df.columns = df.columns.str.strip().str.lower()
 
     df_clean = clean_data(df)
     print(f"Cleaned data: {len(df_clean)} rows.")
