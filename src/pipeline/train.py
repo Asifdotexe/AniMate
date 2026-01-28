@@ -58,6 +58,13 @@ def train():
     # But since it's processed CSV, we just load it.
     df = pd.read_csv(processed_data_path)
 
+    # Memory Optimization: Convert object columns to category
+    # (CSV doesn't preserve dtypes, so we must recast here)
+    category_columns = ["genres", "studio", "demographic", "source", "status"]
+    for col in category_columns:
+        if col in df.columns:
+            df[col] = df[col].astype("category")
+
     # Check if 'stemmed_synopsis' exists, if not create it (backward compatibility or safety)
     if "stemmed_synopsis" not in df.columns:
         print("stemmed_synopsis column missing, generating it...")
