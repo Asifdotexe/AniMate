@@ -1,5 +1,5 @@
 """
-Module that contains the test cases for the engine module.
+This is the module that contains the test cases for the engine module.
 """
 
 from unittest.mock import MagicMock, patch
