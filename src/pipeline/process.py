@@ -115,6 +115,12 @@ def main():
 
     df_processed = process_features(df_clean)
 
+    # Memory Optimization: Convert object columns to category
+    category_columns = ["genres", "studio", "demographic", "source", "status"]
+    for col in category_columns:
+        if col in df_processed.columns:
+            df_processed[col] = df_processed[col].astype("category")
+
     output_path = os.path.join(processed_dir, "anime_data_processed.csv")
     df_processed.to_csv(output_path, index=False)
     print(f"Processed data saved to {output_path}")
