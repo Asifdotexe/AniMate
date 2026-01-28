@@ -23,7 +23,10 @@ from src.preprocessing import preprocess_text
 
 
 def load_config() -> dict:
-    """Load configuration from config.yaml."""
+    """Load configuration from config.yaml.
+
+    :return: Configuration dictionary.
+    """
     config_path = os.path.join(project_root, "config.yaml")
     with open(config_path, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
@@ -35,71 +38,92 @@ def load_config() -> dict:
         return cfg
 
 
-def train():
+def load_processed_data(data_path: str) -> pd.DataFrame:
+    """Load and optimize processed data.
+
+    :param data_path: Path to processed data.
+    :return: DataFrame with processed data.
     """
-    Train the model and save artifacts.
-    """
-    print("Loading configuration...")
-    config = load_config()
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Processed data not found at {data_path}. Run src/pipeline/process.py first.")
 
-    print("Loading processed data...")
-    # We load from data/processed/anime_data_processed.csv
-    # Ideally this filename matches what process.py outputs.
-    processed_data_path = os.path.join(
-        project_root, "data", "processed", "anime_data_processed.csv"
-    )
+    df = pd.read_csv(data_path)
 
-    if not os.path.exists(processed_data_path):
-        print(f"Error: Processed data not found at {processed_data_path}")
-        print("Please run src/pipeline/process.py first.")
-        return
-
-    # Load data. We assume types are inferred correctly or we can use dtypes from config if applicable.
-    # But since it's processed CSV, we just load it.
-    df = pd.read_csv(processed_data_path)
-
-    # Memory Optimization: Convert object columns to category
-    # (CSV doesn't preserve dtypes, so we must recast here)
-    category_columns = ["genres", "studio", "demographic", "source", "status"]
-    for col in category_columns:
+    # Memory Optimization: explicit cast to category
+    for col in ["genres", "studio", "demographic", "source", "status"]:
         if col in df.columns:
             df[col] = df[col].astype("category")
 
-    # Check if 'stemmed_synopsis' exists, if not create it (backward compatibility or safety)
+    # Ensure text column exists
     if "stemmed_synopsis" not in df.columns:
-        print("stemmed_synopsis column missing, generating it...")
-        # basic fillna to avoid errors
+        print("Regenerating stemmed_synopsis...")
         df["synopsis"] = df["synopsis"].fillna("")
         df["stemmed_synopsis"] = df["synopsis"].apply(preprocess_text)
-
-    # Ensure no float/NaN values in text column
+    
     df["stemmed_synopsis"] = df["stemmed_synopsis"].fillna("")
+    return df
 
-    print("Vectorizing and building model...")
+
+def train_knn_model(df: pd.DataFrame, config: dict) -> tuple[NearestNeighbors, TfidfVectorizer]:
+    """Vectorize text and train K-NN model.
+
+    :param df: DataFrame with processed data.
+    :param config: Configuration dictionary.
+    :return: Tuple of K-NN model and TfidfVectorizer.
+    """
     model_cfg = config.get("model", {})
-
-    tfidf_vectorizer = TfidfVectorizer(
-        stop_words="english", max_features=model_cfg.get("max_features", 5000)
+    
+    print("Vectorizing data...")
+    vectorizer = TfidfVectorizer(
+        stop_words="english", 
+        max_features=model_cfg.get("max_features", 5000)
     )
-    tfidf_matrix = tfidf_vectorizer.fit_transform(df["stemmed_synopsis"])
+    tfidf_matrix = vectorizer.fit_transform(df["stemmed_synopsis"])
 
-    knn_model = NearestNeighbors(
+    print("Training model...")
+    knn = NearestNeighbors(
         n_neighbors=model_cfg.get("n_neighbors", 5),
         metric=model_cfg.get("metric", "cosine"),
-    ).fit(tfidf_matrix)
+    )
+    knn.fit(tfidf_matrix)
+    
+    return knn, vectorizer
 
-    print("Saving artifacts...")
-    models_dir = os.path.join(project_root, "models")
+
+def save_artifacts(models_dir: str, knn: NearestNeighbors, vectorizer: TfidfVectorizer, df: pd.DataFrame):
+    """Save model artifacts and processed data.
+
+    :param models_dir: Directory to save artifacts.
+    :param knn: K-NN model.
+    :param vectorizer: TfidfVectorizer.
+    :param df: DataFrame with processed data.
+    """
     os.makedirs(models_dir, exist_ok=True)
-
-    joblib.dump(knn_model, os.path.join(models_dir, "knn_model.joblib"))
-    joblib.dump(tfidf_vectorizer, os.path.join(models_dir, "tfidf_vectorizer.joblib"))
-
-    # Save the dataframe as pickle for fast loading in app
-    # The app needs the full dataframe to display results
+    joblib.dump(knn, os.path.join(models_dir, "knn_model.joblib"))
+    joblib.dump(vectorizer, os.path.join(models_dir, "tfidf_vectorizer.joblib"))
     df.to_pickle(os.path.join(models_dir, "processed_data.pkl"))
+    print(f"Artifacts saved to {models_dir}")
 
-    print("Training complete. Artifacts saved in 'models/'.")
+
+def train():
+    """Main training execution."""
+    print("Loading configuration...")
+    
+    try:
+        config = load_config()
+
+        data_path = os.path.join(project_root, "data", "processed", "anime_data_processed.csv")
+        df = load_processed_data(data_path)
+
+        knn_model, vectorizer = train_knn_model(df, config)
+
+        models_dir = os.path.join(project_root, "models")
+        save_artifacts(models_dir, knn_model, vectorizer, df)
+        
+    except Exception:
+        import traceback
+        print(f"Training failed:\n{traceback.format_exc()}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

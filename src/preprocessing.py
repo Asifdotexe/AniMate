@@ -8,20 +8,11 @@ from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 
 # Ensure necessary NLTK data packages are downloaded
-try:
-    nltk.data.find("corpora/stopwords")
-except LookupError:
-    nltk.download("stopwords")
-
-try:
-    nltk.data.find("tokenizers/punkt_tab")
-except LookupError:
-    nltk.download("punkt_tab")
-
-try:
-    nltk.data.find("tokenizers/punkt")
-except LookupError:
-    nltk.download("punkt")
+for resource in ["corpora/stopwords", "tokenizers/punkt_tab", "tokenizers/punkt"]:
+    try:
+        nltk.data.find(resource)
+    except LookupError:
+        nltk.download(resource.split("/")[-1])
 
 
 stemmer = PorterStemmer()

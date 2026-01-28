@@ -49,6 +49,27 @@ def load_processed_data(model_dir: str) -> pd.DataFrame:
     return pd.read_pickle(data_path)
 
 
+def _filter_by_query(df: pd.DataFrame, query: str) -> pd.DataFrame:
+    """Filter out exact query matches from recommendations.
+
+    :param df: DataFrame with recommendations.
+    :param query: User query.
+    :return: Filtered DataFrame.
+    """
+    # Normalize title column if needed (handling legacy case)
+    if "title" not in df.columns and "Title" in df.columns:
+        df = df.rename(columns={"Title": "title"})
+
+    if "title" not in df.columns:
+        return df
+
+    # Exclude the query itself if it appears in results
+    mask = ~df["title"].str.contains(query, case=False, na=False, regex=False)
+    filtered = df[mask]
+    
+    return filtered if not filtered.empty else df
+
+
 def get_recommendations(
     query: str,
     tfidf_vectorizer: TfidfVectorizer,
@@ -75,30 +96,15 @@ def get_recommendations(
     _, indices = knn_model.kneighbors(query_tfidf, n_neighbors=n_neighbors_query)
 
     recommendations = data.iloc[indices[0]].copy()
+    
+    # Filter and sort
+    final_recommendations = _filter_by_query(recommendations, query)
+    
+    if "score" not in final_recommendations.columns:
+         # Fallback verification, though process.py ensures it
+        raise ValueError("The 'score' column is missing. Cannot sort recommendations.")
 
-    # Normalize title column
-    if "title" not in recommendations.columns and "Title" in recommendations.columns:
-        recommendations = recommendations.rename(columns={"Title": "title"})
-        
-    # Filter out the query itself if it matches a title exactly (basic self-exclusion)
-    if "title" in recommendations.columns:
-         filtered_recommendations = recommendations[
-            ~recommendations["title"].str.contains(query, case=False, na=False)
-        ]
-    else:
-        # If we can't find title column even after check, just skip filtering
-        filtered_recommendations = recommendations
-
-    if filtered_recommendations.empty:
-        filtered_recommendations = recommendations
-
-    if "score" not in filtered_recommendations.columns:
-        raise ValueError(
-            "The 'score' column is missing from the DataFrame "
-            "'filtered_recommendations'. Cannot sort recommendations."
-        )
-
-    final_recommendations = filtered_recommendations.sort_values(
+    final_recommendations = final_recommendations.sort_values(
         by="score", ascending=False
     ).head(top_n)
 
