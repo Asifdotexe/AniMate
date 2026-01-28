@@ -69,7 +69,7 @@ def display_recommendations(recommendations: pd.DataFrame):
     ]
 
     for _, row in recommendations.iterrows():
-        title = row['title'].title()
+        title = row['title']
         with st.expander(f"**{title}**"):
             # Dynamic column display
             for col in columns_to_show:
