@@ -2,6 +2,10 @@
 
 **AniMate** is a Python-based anime recommendation system that utilizes natural language processing (NLP) to suggest anime based on user preferences.
 
+## System Architecture
+
+AniMate follows a modular data pipeline architecture. For a detailed overview of the system components and data flow, please refer to [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## Installation
 
 To get started with AniMate, you need to install the following software:
