@@ -76,10 +76,18 @@ def get_recommendations(
 
     recommendations = data.iloc[indices[0]].copy()
 
+    # Normalize title column
+    if "title" not in recommendations.columns and "Title" in recommendations.columns:
+        recommendations = recommendations.rename(columns={"Title": "title"})
+        
     # Filter out the query itself if it matches a title exactly (basic self-exclusion)
-    filtered_recommendations = recommendations[
-        ~recommendations["title"].str.contains(query, case=False, na=False)
-    ]
+    if "title" in recommendations.columns:
+         filtered_recommendations = recommendations[
+            ~recommendations["title"].str.contains(query, case=False, na=False)
+        ]
+    else:
+        # If we can't find title column even after check, just skip filtering
+        filtered_recommendations = recommendations
 
     if filtered_recommendations.empty:
         filtered_recommendations = recommendations
