@@ -8,7 +8,8 @@ graph LR
     A[Scraper] --> B[Preprocessor]
     B --> C[Trainer]
     C --> D[Model Artifacts]
-    D --> E[Streamlit App]
+    D --> F[Inference Engine]
+    F --> E[Streamlit App]
 ```
 
 ## Modules
@@ -17,7 +18,7 @@ graph LR
 Responsible for data ingestion and model training.
 
 - **Collector** (`collect.py`): Scrapes data from MyAnimeList.
-- **processor** (`process.py`): Cleans data, normalizes columns, and prepares features.
+- **Processor** (`process.py`): Cleans data, normalizes columns, and prepares features.
 - **Trainer** (`train.py`): Trains the k-NN model and saves artifacts.
 
 > [!TIP]

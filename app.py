@@ -145,5 +145,3 @@ else:
                 )
             
             display_recommendations(results)
-    else:
-        st.warning("Please enter a valid query to get recommendations.")

@@ -106,14 +106,12 @@ def save_artifacts(models_dir: str, knn: NearestNeighbors, vectorizer: TfidfVect
 
 
 def train():
-    """Main training execution.
-    
-    :raises Exception: If training fails.
-    """
+    """Main training execution."""
     print("Loading configuration...")
-    config = load_config()
-
+    
     try:
+        config = load_config()
+
         data_path = os.path.join(project_root, "data", "processed", "anime_data_processed.csv")
         df = load_processed_data(data_path)
 
@@ -122,8 +120,9 @@ def train():
         models_dir = os.path.join(project_root, "models")
         save_artifacts(models_dir, knn_model, vectorizer, df)
         
-    except Exception as e:
-        print(f"Training failed: {e}")
+    except Exception:
+        import traceback
+        print(f"Training failed:\n{traceback.format_exc()}")
         sys.exit(1)
 
 

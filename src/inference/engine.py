@@ -64,7 +64,7 @@ def _filter_by_query(df: pd.DataFrame, query: str) -> pd.DataFrame:
         return df
 
     # Exclude the query itself if it appears in results
-    mask = ~df["title"].str.contains(query, case=False, na=False)
+    mask = ~df["title"].str.contains(query, case=False, na=False, regex=False)
     filtered = df[mask]
     
     return filtered if not filtered.empty else df
