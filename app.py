@@ -129,25 +129,18 @@ else:
             else:
                 for index, row in recommended_animes.iterrows():
                     with st.expander(f"**{row['title'].title()}**"):
-                        image_column, text_column = st.columns([1, 3])
-                        with image_column:
-                            if pd.notna(row["image_url"]):
-                                st.image(
-                                    row["image_url"],
-                                    caption=row["title"].title(),
-                                    width=100,
-                                )
-                        with text_column:
-                            for column in [
-                                "other_name",
-                                "genres",
-                                "synopsis",
-                                "studio",
-                                "demographic",
-                                "source",
-                                "duration_category",
-                                "total_duration_hours",
-                            ]:
+                        # Image URL is not available in the current dataset, so we verify referencing available columns only
+                        for column in [
+                            "genres",
+                            "synopsis",
+                            "studio",
+                            "demographic",
+                            "source",
+                            "score",
+                            "episodes",
+                            "release year"
+                        ]:
+                            if column in row.index:
                                 value = row[column]
                                 if pd.notna(value):
                                     st.write(
