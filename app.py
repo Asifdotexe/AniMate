@@ -57,6 +57,27 @@ def display_memory():
     st.write(f"Memory usage: {utils.get_memory_usage()}%")
 
 
+def display_recommendations(recommendations: pd.DataFrame):
+    """Display the list of recommended anime."""
+    if recommendations.empty:
+        st.warning("No recommendations found. Please try a different query.")
+        return
+
+    columns_to_show = [
+        "genres", "synopsis", "studio", "demographic", 
+        "source", "score", "episodes", "release year"
+    ]
+
+    for _, row in recommendations.iterrows():
+        title = row['title'].title()
+        with st.expander(f"**{title}**"):
+            # Dynamic column display
+            for col in columns_to_show:
+                if col in row.index and pd.notna(row[col]):
+                    label = col.replace("_", " ").title()
+                    st.write(f"**{label}:** {row[col]}")
+
+
 # Landing Page
 if st.session_state.page == "landing":
     st.title(f"Welcome to {config['app']['title']}!")
@@ -91,19 +112,16 @@ if st.session_state.page == "landing":
 # Recommendations Page
 else:
     st.title(config["app"]["title"])
-    st.caption(
-        """AniMate is a Python-based anime recommendation system
-        that utilizes natural language processing (NLP) to suggest anime based on user preferences"""
-    )
+    st.caption(config["app"]["description"])
 
     display_memory()
 
-    query, number = st.columns([4, 1])
-    with query:
+    query_col, num_col = st.columns([4, 1])
+    with query_col:
         user_query = st.text_input(
             "Describe a plot! Let's see if we can find something that matches that."
-        )
-    with number:
+        ).strip()
+    with num_col:
         num_recommendations = st.number_input(
             "No. of results:",
             min_value=1,
@@ -112,39 +130,20 @@ else:
         )
 
     if st.button("Get Recommendations"):
-        if user_query.strip():
+        if not user_query:
+            st.warning("Please enter a valid query to get recommendations.")
+        else:
             st.write("### Recommendations based on your input:")
-
+            
             with st.spinner(random.choice(config["app"]["loading_phrases"])):
-                recommended_animes = engine.get_recommendations(
+                results = engine.get_recommendations(
                     user_query,
                     tfidf_vectorizer,
                     knn_model,
                     data,
                     top_n=num_recommendations,
                 )
-
-            if recommended_animes.empty:
-                st.warning("No recommendations found. Please try a different query.")
-            else:
-                for index, row in recommended_animes.iterrows():
-                    with st.expander(f"**{row['title'].title()}**"):
-                        # Image URL is not available in the current dataset, so we verify referencing available columns only
-                        for column in [
-                            "genres",
-                            "synopsis",
-                            "studio",
-                            "demographic",
-                            "source",
-                            "score",
-                            "episodes",
-                            "release year"
-                        ]:
-                            if column in row.index:
-                                value = row[column]
-                                if pd.notna(value):
-                                    st.write(
-                                        f"**{column.replace('_', ' ').title()}:** {value}"
-                                    )
-        else:
-            st.warning("Please enter a valid query to get recommendations.")
+            
+            display_recommendations(results)
+    else:
+        st.warning("Please enter a valid query to get recommendations.")

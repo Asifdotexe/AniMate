@@ -42,33 +42,26 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     :return: Cleaned DataFrame.
     """
     # Validate required columns
-    # Validate required columns
     required_columns = ["title", "synopsis"]
     for col in required_columns:
         if col not in df.columns:
             raise KeyError(f"Missing required column: {col}")
 
-    # Drop duplicates
+    # Deduplicate and clean
     df = df.drop_duplicates(subset=["title"])
-
-    # Drop rows with missing synopsis as it's critical for recommendation
     df = df.dropna(subset=["synopsis"])
 
-    # Handle episodes if it exists
-    # Handle episodes if it exists
     if "episodes" in df.columns:
         df["episodes"] = df["episodes"].fillna("N/A")
 
     # Normalize Score/Rating
-    if "score" not in df.columns and "rating" not in df.columns:
-        # Create default if neither exists
-        df["score"] = 0
-    elif "score" not in df.columns and "rating" in df.columns:
-         # Use Rating as Score source
-         df["score"] = pd.to_numeric(df["rating"], errors="coerce").fillna(0)
+    # Prioritize 'rating', fallback to 'score', default to 0
+    if "rating" in df.columns:
+        df["score"] = pd.to_numeric(df["rating"], errors="coerce").fillna(0)
     elif "score" in df.columns:
-        # Ensure Score is numeric
         df["score"] = pd.to_numeric(df["score"], errors="coerce").fillna(0)
+    else:
+        df["score"] = 0
 
     return df
 
@@ -80,7 +73,6 @@ def process_features(df: pd.DataFrame) -> pd.DataFrame:
     :param df: Cleaned DataFrame.
     :return: DataFrame with additional feature columns.
     """
-    tqdm.pandas(desc="Preprocessing Synopsis")
     tqdm.pandas(desc="Preprocessing Synopsis")
     df["stemmed_synopsis"] = df["synopsis"].progress_apply(preprocess_text)
     return df

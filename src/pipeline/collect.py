@@ -35,31 +35,14 @@ def safe_text(element: bs, default: str = "N/A") -> str:
     return element.text.strip() if element else default
 
 
-def safe_int(element: bs, default: str = "N/A") -> int | str:
-    """
-    Extract an integer value from the text of an element.
-
-    :param element: A BeautifulSoup element containing the text to be parsed.
-    :param default: A default value to return if the element is not found.
-    :return: An integer value extracted from the text of the element, or the default value.
-    """
-    try:
-        return int(element.text.strip().replace(",", "")) if element else default
-    except ValueError:
+def safe_parse(element: bs, cast_type: type = str, default="N/A"):
+    """Safely extract and cast text from an element."""
+    if not element:
         return default
-
-
-def safe_float(element: bs, default: str = "N/A") -> float | str:
-    """
-    Extract a float value from the text of an element.
-
-    :param element: A BeautifulSoup element containing the text to be parsed.
-    :param default: A default value to return if the element is not found.
-    :return: A float value extracted from the text of the element, or the default value.
-    """
+    text = element.text.strip().replace(",", "")
     try:
-        return float(element.text.strip()) if element else default
-    except ValueError:
+        return cast_type(text)
+    except (ValueError, TypeError):
         return default
 
 
@@ -76,90 +59,61 @@ def _extract_release_year(soup: bs) -> str:
 
 def _extract_episodes(info_div: bs) -> str:
     """Extract number of episodes."""
-    if not info_div:
-        return "N/A"
-    eps_text = info_div.get_text()
-    match = re.search(r"(\d+)\s*eps", eps_text)
+    if not info_div: return "N/A"
+    match = re.search(r"(\d+)\s*eps", info_div.get_text())
     return match.group(1) if match else "N/A"
 
 
 def _extract_status(info_div: bs) -> str:
     """Extract airing status."""
-    if not info_div:
-        return "N/A"
+    if not info_div: return "N/A"
     return safe_text(
-        info_div.find("span", class_="item finished")
-        or info_div.find("span", class_="item airing")
+        info_div.find("span", class_="item finished") or info_div.find("span", class_="item airing")
     )
 
 
 def _extract_genres(soup: bs) -> str:
     """Extract genres."""
-    genres_div = soup.find("div", class_="genres-inner js-genre-inner")
-    return (
-        ", ".join(
-            [
-                genre.find("a").text.strip()
-                for genre in genres_div.find_all("span", class_="genre")
-            ]
-        )
-        if genres_div
-        else "N/A"
-    )
+    div = soup.find("div", class_="genres-inner js-genre-inner")
+    return ", ".join(t.get_text(strip=True) for t in div.find_all("span", class_="genre")) if div else "N/A"
 
 
 def _extract_property(properties_div: bs, caption: str) -> str:
     """Extract specific property by caption."""
-    if not properties_div:
-        return "N/A"
-    property_divs = properties_div.find_all("div", class_="property")
-    for div in property_divs:
-        caption_span = div.find("span", class_="caption")
-        if caption_span and caption_span.text.strip() == caption:
-            item_spans = div.find_all("span", class_="item")
-            return (
-                ", ".join(item.get_text(strip=True) for item in item_spans)
-                if item_spans
-                else "N/A"
-            )
+    if not properties_div: return "N/A"
+    for div in properties_div.find_all("div", class_="property"):
+        cap = div.find("span", class_="caption")
+        if cap and cap.text.strip() == caption:
+            items = div.find_all("span", class_="item")
+            return ", ".join(i.get_text(strip=True) for i in items) if items else "N/A"
     return "N/A"
 
 
 def _extract_themes(properties_div: bs) -> str:
     """Extract anime themes."""
-    if not properties_div:
-        return "N/A"
+    if not properties_div: return "N/A"
     themes_div = properties_div.find("div", class_="property")
     if themes_div:
-        themes_html = str(themes_div)
-        theme_matches = re.findall(
-            r'<span class="item"><a href="/anime/genre/\d+/[^"]*" title="[^"]*">([^<]*)</a></span>',
-            themes_html,
-        )
-        return ", ".join(theme_matches) if theme_matches else "N/A"
+        matches = re.findall(r'<span class="item"><a.*?>(.*?)</a></span>', str(themes_div))
+        return ", ".join(matches) if matches else "N/A"
     return "N/A"
 
 
 def _extract_rating(soup: bs) -> float | str:
     """Extract anime rating."""
-    rating_div = soup.find(
-        "div", class_=re.compile(r"scormem-item score score-label score-\d+")
-    )
-    return safe_float(rating_div, "N/A")
+    div = soup.find("div", class_=re.compile(r"scormem-item score score-label score-\d+"))
+    return safe_parse(div, float, "N/A")
 
 
 def _extract_voters(soup: bs) -> int | str:
     """Extract number of voters."""
-    return safe_int(soup.find("div", class_="scormem-item member"), "N/A")
+    return safe_parse(soup.find("div", class_="scormem-item member"), int, "N/A")
 
 
 def _extract_synopsis(soup: bs) -> str:
-    """Extract synopsis."""
-    synopsis_div = soup.find("div", class_="synopsis js-synopsis")
-    return safe_text(
-        synopsis_div.find("p", class_="preline") if synopsis_div else None,
-        "N/A",
-    )
+    """Extract anime synopsis."""
+    div = soup.find("div", class_="synopsis js-synopsis")
+    return safe_text(div.find("p", class_="preline"), "N/A") if div else "N/A"
 
 
 def scrape_anime_item(anime_item_html: str) -> Dict[str, str]:
