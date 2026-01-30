@@ -40,10 +40,10 @@ ITEMS_PER_PAGE = 25
 DEFAULT_FILTER_TYPE = "bypopularity"
 
 # Default fetch settings
-# 20 pages * 25 items = 500 records.
+# 200 pages * 25 items = 500 records.
 # Increase this to fetch more of the catalogue.
 DEFAULT_START_PAGE = 1
-DEFAULT_PAGE_LIMIT = 200
+DEFAULT_PAGE_LIMIT = 20
 
 # ==========================================
 # File System Paths
