@@ -2,15 +2,19 @@
 
 This directory contains the sequential data pipeline for the AniMate project.
 
-## 1. Data Collection
-Scrape data from MyAnimeList and save it to `data/raw`.
+## 1. Data Collection (Upsert)
+Fetch popular anime data using the Jikan API (v4). 
+This script implements an **Upsert** strategy:
+- Updates existing anime in `data/raw/anime_master_db.csv`
+- Appends new unique anime found in the API response.
 
 ```bash
-python src/pipeline/collect.py
+python src/pipeline/collect_api.py
 ```
 
 ## 2. Data Processing
-Clean and preprocess the raw data, merging it into a single dataset saved to `data/processed`.
+Reads the persistent `data/raw/anime_master_db.csv`, cleans it, and applies text preprocessing.
+The result is saved to `data/processed/anime_data_processed.csv`.
 
 ```bash
 python src/pipeline/process.py

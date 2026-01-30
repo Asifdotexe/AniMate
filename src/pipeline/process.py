@@ -20,20 +20,6 @@ if project_root not in sys.path:
 from src.preprocessing import preprocess_text
 
 
-def get_latest_raw_file(raw_dir: str) -> str:
-    """
-    Get the path to the latest CSV file in the raw directory.
-
-    :param raw_dir: Directory containing raw CSV files.
-    :return: Path to the latest file.
-    :raises FileNotFoundError: If no CSV files are found.
-    """
-    list_of_files = glob.glob(os.path.join(raw_dir, "AnimeData_*.csv"))
-    if not list_of_files:
-        raise FileNotFoundError(f"No AnimeData_*.csv files found in {raw_dir}")
-    return max(list_of_files, key=os.path.getctime)
-
-
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Perform basic data cleaning.
@@ -43,6 +29,9 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     # Validate required columns
     required_columns = ["title", "synopsis"]
+    # Be case-insensitive for columns
+    df.columns = df.columns.str.strip().str.lower()
+    
     for col in required_columns:
         if col not in df.columns:
             raise KeyError(f"Missing required column: {col}")
@@ -82,20 +71,15 @@ def main():
     """
     Main execution flow for data processing.
     """
-    raw_dir = os.path.join(project_root, "data", "raw")
+    raw_file = os.path.join(project_root, "data", "raw", "anime_master_db.csv")
     processed_dir = os.path.join(project_root, "data", "processed")
     os.makedirs(processed_dir, exist_ok=True)
 
-    try:
-        raw_file = get_latest_raw_file(raw_dir)
-        print(f"Processing latest raw file: {raw_file}")
-    except FileNotFoundError as e:
-        print(e)
-        # Fallback for dev/testing if raw is empty but we have existing data
-        # check if there is a 'final' data to use as base?
-        # For now, just exit if no raw data.
+    if not os.path.exists(raw_file):
+        print(f"Error: Master DB not found at {raw_file}")
         return
 
+    print(f"Processing master database: {raw_file}")
     df = pd.read_csv(raw_file)
     print(f"Loaded {len(df)} rows.")
 
