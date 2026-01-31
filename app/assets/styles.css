@@ -95,58 +95,131 @@ h1 {
 /* Anime Cards (Grid Layout) */
 .anime-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-top: 2rem;
+    /* Responsive grid: min 250px width, fills available space */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 0;
+    padding-bottom: 2rem;
 }
 
 .anime-card {
     background-color: var(--card-bg);
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .anime-card:hover {
-    transform: scale(1.05);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-    z-index: 10;
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+}
+
+.card-image-container {
+    position: relative;
+    width: 100%;
+    padding-top: 140%;
+    /* Aspect Ratio 1:1.4 roughly (standard poster) */
+    overflow: hidden;
 }
 
 .card-image {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 300px;
+    height: 100%;
     object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.anime-card:hover .card-image {
+    transform: scale(1.05);
+}
+
+.card-badges {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    z-index: 3;
+}
+
+.badge {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.badge-score {
+    background-color: rgba(70, 211, 105, 0.95);
+    /* Bright Green */
+}
+
+.badge-rating {
+    background-color: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .card-content {
-    padding: 1rem;
+    padding: 1.25rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(to bottom, var(--card-bg) 0%, #1a1a1a 100%);
 }
 
 .card-title {
     font-family: var(--font-primary);
     font-weight: 700;
-    font-size: 1rem;
-    margin-bottom: 0.5rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+    line-height: 1.3;
+    color: var(--text-color);
+}
+
+.card-subtitle {
+    font-size: 0.85rem;
+    color: var(--accent-color);
+    /* Use accent color to make it pop */
+    margin-bottom: 0.75rem;
+    font-family: 'Noto Sans JP', sans-serif;
+    /* Good for Japanese characters */
+    opacity: 0.9;
+    min-height: 1.2em;
+    /* Ensure space exists even if empty (though we handle empty via logic) */
 }
 
 .card-meta {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    font-size: 0.75rem;
+    color: #bbb;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.match-score {
-    color: #46d369;
-    /* Netflix Match Green */
-    font-weight: 800;
+.card-synopsis {
+    font-size: 0.85rem;
+    color: #ccc;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-top: auto;
 }
 
 /* Animations */

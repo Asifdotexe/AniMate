@@ -37,7 +37,7 @@ def load_html_template(filename: str) -> str:
 
 
 # Streamlit app setup
-st.set_page_config(page_title=config.app.name, page_icon="🎬")
+st.set_page_config(page_title=config.app.name, page_icon="🎬", layout="wide")
 
 # Load custom styles
 css_path = Path(config.paths.css)
@@ -94,29 +94,26 @@ def display_recommendations(recommendations: pd.DataFrame):
         st.error("Template 'card.html' not found!")
         return
 
-    cols = st.columns(3) # 3 columns for grid
     
+    # Render all cards in a single string to let CSS Grid handle the layout
+    cards_html = ""
     for idx, row in recommendations.iterrows():
-        with cols[idx % 3]:
-            # Prepared variables for template
-            context = {
-                "title": row["title"],
-                "score": row.get("score", "N/A"),
-                "synopsis": (row.get("synopsis", "No synopsis available.") or "")[:150] + "...",
-                "genres": row.get("genres", "Anime")
-            }
-            
-            # Using st.container for card styling wrapper
-            with st.container():
-                st.markdown(card_html_template.substitute(context), unsafe_allow_html=True)
-                
-                # Expandable details
-                with st.expander("Explore"):
-                     st.write(f"**Studio:** {row.get('studio', 'N/A')}")
-                     st.write(f"**Episodes:** {row.get('episodes', 'N/A')}")
-                     st.write(f"**Year:** {row.get('release year', 'N/A')}")
+        # Prepared variables for template
+        context = {
+            "title": row.get("title", "Unknown Title"),
+            "title_japanese": row.get("japanese title") if pd.notna(row.get("japanese title")) else "",
+            "score": f"{row.get('score', 'N/A')}",
+            "rating": row.get("content rating", "N/A"),
+            "image": row.get("image url", "https://via.placeholder.com/300x450?text=No+Image"),
+            "synopsis": (row.get("synopsis", "No synopsis available.") or "")[:200] + "...",
+            "genres": row.get("genres", "Anime")
+        }
+        
+        cards_html += card_html_template.substitute(context)
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Wrap in grid container
+    full_html = f'<div class="anime-grid">{cards_html}</div>'
+    st.markdown(full_html, unsafe_allow_html=True)
 
 
 # Landing Page
@@ -151,7 +148,7 @@ else:
             value=config.model.top_k_recommendations,
         )
 
-    if st.button("Get Recommendations"):
+    if st.button("Get Recommendations", use_container_width=True):
         if not user_query:
             st.warning("Please enter a valid query to get recommendations.")
         else:

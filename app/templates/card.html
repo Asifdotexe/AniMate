@@ -1,10 +1,18 @@
 <div class="anime-card">
+    <div class="card-image-container">
+        <img src="$image" alt="$title" class="card-image"
+            onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'">
+        <div class="card-badges">
+            <span class="badge badge-score">$score</span>
+            <span class="badge badge-rating">$rating</span>
+        </div>
+    </div>
     <div class="card-content">
         <div class="card-title">$title</div>
+        <div class="card-subtitle">$title_japanese</div>
         <div class="card-meta">
             <span>$genres</span>
-            <span class="match-score">$score Match</span>
         </div>
-        <p style="font-size: 0.8rem; color: #ccc; margin-top: 10px;">$synopsis</p>
+        <p class="card-synopsis">$synopsis</p>
     </div>
 </div>
