@@ -59,13 +59,6 @@ def load_resources():
 data, knn_model, tfidf_vectorizer = load_resources()
 
 
-def display_memory():
-    """
-    Display memory usage information.
-    """
-    st.sidebar.text(f"Memory usage: {logger.get_memory_usage()}%")
-
-
 def display_recommendations(recommendations: pd.DataFrame):
     """Display the list of recommended anime."""
     if recommendations.empty:
@@ -116,15 +109,11 @@ if st.session_state.page == "landing":
     if st.button("Recommend Me Something"):
         st.session_state.page = "recommendations"
 
-    display_memory()
-
     # Contributors section removed as it's not in the new config.
 
 # Recommendations Page
 else:
     st.title(config.app.name)
-
-    display_memory()
 
     query_col, num_col = st.columns([4, 1])
     with query_col:
