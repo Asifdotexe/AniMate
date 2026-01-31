@@ -112,7 +112,6 @@ if st.session_state.page == "landing":
 # Recommendations Page
 else:
     st.title(config["app"]["title"])
-    st.caption(config["app"]["description"])
 
     display_memory()
 
