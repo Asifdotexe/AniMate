@@ -8,8 +8,7 @@ import sys
 
 import psutil
 
-from src.config import config
-
+from src import config as config_module
 
 def setup_logging(name: str) -> logging.Logger:
     """
@@ -20,7 +19,15 @@ def setup_logging(name: str) -> logging.Logger:
     """
     logger = logging.getLogger(name)
     if not logger.handlers:
-        level = logging.DEBUG if config.app.debug else logging.INFO
+        try:
+            # Lazy load config to avoid import-time side effects
+            debug_mode = config_module.config.app.debug
+        except (AttributeError, ImportError, FileNotFoundError) as e:
+            # Fallback if config fails to load
+            print(f"Warning: Could not load config for logging ({e}). Defaulting to INFO.")
+            debug_mode = False
+
+        level = logging.DEBUG if debug_mode else logging.INFO
         logger.setLevel(level)
         handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter(

@@ -28,10 +28,10 @@ def load_models() -> tuple[NearestNeighbors, TfidfVectorizer]:
 
     if not knn_path.exists() or not tfidf_path.exists():
         raise FileNotFoundError(
-            f"Model artifacts not found. Please run src/components/trainer.py first."
+            "Model artifacts not found. Please run src/components/trainer.py first."
         )
 
-    logger.info(f"Loading models...")
+    logger.info("Loading models...")
     knn_model = joblib.load(knn_path)
     tfidf_vectorizer = joblib.load(tfidf_path)
 

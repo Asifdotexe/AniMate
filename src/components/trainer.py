@@ -38,15 +38,7 @@ def load_processed_data(data_path: Path) -> pd.DataFrame:
 
     df = pd.read_csv(data_path)
 
-    # Memory Optimization: explicit cast to category
-    # CATEGORY_COLUMNS are defined in transformation, but we can access config if added,
-    # or better, just rely on what's there or duplicate constant.
-    # Config file didn't explicitly list category cols, but original code used config.CATEGORY_COLUMNS.
-    # I'll rely on the transformation logic having done this, or just skip re-casting unless necessary.
-    # To be safe, let's skip re-casting here as transformation.py does it before saving,
-    # and CSV might lose it but `read_csv` will infer.
-    # Wait, read_csv doesn't infer category.
-    # I will import CATEGORY_COLUMNS from transformation if possible.
+    # Import CATEGORY_COLUMNS from transformation to ensure categorical columns are available for downstream processing.
     from src.components.transformation import CATEGORY_COLUMNS
 
     for col in CATEGORY_COLUMNS:
@@ -80,12 +72,8 @@ def train_knn_model(df: pd.DataFrame) -> tuple[NearestNeighbors, TfidfVectorizer
 
     logger.info("Training model...")
     knn = NearestNeighbors(
-        n_neighbors=model_cfg.top_k_recommendations,  # Using top_k as n_neighbors? Original used n_neighbors from config.
-        # Original config had `n_neighbors: 5`. New config has `top_k_recommendations: 10`.
-        # I'll use top_k_recommendations or defaults.
-        # Actually n_neighbors for KNN usually matches retrieval count or slightly more.
-        # I'll use top_k_recommendations.
-        metric="cosine",  # Hardcoded or default
+        n_neighbors=model_cfg.top_k_recommendations,  # use top_k_recommendations for n_neighbors
+        metric="cosine",
     )
     knn.fit(tfidf_matrix)
 

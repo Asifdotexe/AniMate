@@ -32,15 +32,19 @@ CATEGORY_COLUMNS = [
 ]
 NLTK_RESOURCES = ["corpora/stopwords", "tokenizers/punkt_tab", "tokenizers/punkt"]
 
-# NLTK Setup
-for resource in NLTK_RESOURCES:
-    try:
-        nltk.data.find(resource)
-    except LookupError:
-        nltk.download(resource.split("/")[-1])
 
+def ensure_nltk_resources():
+    """Ensure required NLTK resources are downloaded."""
+    for resource in NLTK_RESOURCES:
+        try:
+            nltk.data.find(resource)
+        except LookupError:
+            nltk.download(resource.split("/")[-1])
+
+
+# Initialize lazily
 stemmer = PorterStemmer()
-stop_words = set(stopwords.words("english"))
+stop_words = None
 
 
 def preprocess_text(text: str) -> str:
@@ -50,8 +54,16 @@ def preprocess_text(text: str) -> str:
     :param text: The input text to preprocess.
     :returns: The processed text as a single string.
     """
+    global stop_words
+    
     if not text or not isinstance(text, str):
         return ""
+        
+    ensure_nltk_resources()
+    
+    if stop_words is None:
+        stop_words = set(stopwords.words("english"))
+        
     tokens = word_tokenize(text.lower())
     processed = [
         stemmer.stem(word)

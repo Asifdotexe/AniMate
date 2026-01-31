@@ -18,6 +18,9 @@ def load_config(config_path: str = "config.yaml") -> Box:
     with open(full_path, "r") as f:
         config_dict = yaml.safe_load(f)
 
+    if config_dict is None or not isinstance(config_dict, dict):
+        raise ValueError(f"Config file is empty or invalid (not a mapping): {full_path}")
+
     _resolve_paths(config_dict, PROJECT_ROOT)
     return Box(config_dict)
 
