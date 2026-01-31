@@ -70,7 +70,7 @@ def test_get_recommendations(mock_preprocess, mock_data):
     assert recs.iloc[0]["title"] == "Anime A"
 
 
-@patch("os.path.exists")
+@patch("pathlib.Path.exists")
 @patch("joblib.load")
 def test_load_models_success(mock_joblib_load, mock_exists):
     """Test successful loading of models."""
@@ -84,7 +84,7 @@ def test_load_models_success(mock_joblib_load, mock_exists):
     assert mock_joblib_load.call_count == 2
 
 
-@patch("os.path.exists")
+@patch("pathlib.Path.exists")
 def test_load_models_file_not_found(mock_exists):
     """Test that FileNotFoundError is raised when models are missing."""
     mock_exists.return_value = False
@@ -93,7 +93,7 @@ def test_load_models_file_not_found(mock_exists):
         engine.load_models("models")
 
 
-@patch("os.path.exists")
+@patch("pathlib.Path.exists")
 @patch("pandas.read_pickle")
 def test_load_processed_data(mock_read_pickle, mock_exists):
     """Test loading of processed data."""

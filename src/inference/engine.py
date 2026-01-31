@@ -16,13 +16,14 @@ from src.utils import setup_logging
 logger = setup_logging("inference_engine")
 
 
-def load_models(model_dir: Path) -> tuple[NearestNeighbors, TfidfVectorizer]:
+def load_models(model_dir: Path | str) -> tuple[NearestNeighbors, TfidfVectorizer]:
     """
     Load pre-trained model and vectorizer from the specified directory.
 
     :param model_dir: Directory containing the .joblib files.
     :return: A tuple containing the k-NN model and the TF-IDF vectorizer.
     """
+    model_dir = Path(model_dir)
     knn_path = model_dir / "knn_model.joblib"
     tfidf_path = model_dir / "tfidf_vectorizer.joblib"
 
@@ -38,13 +39,14 @@ def load_models(model_dir: Path) -> tuple[NearestNeighbors, TfidfVectorizer]:
     return knn_model, tfidf_vectorizer
 
 
-def load_processed_data(model_dir: Path) -> pd.DataFrame:
+def load_processed_data(model_dir: Path | str) -> pd.DataFrame:
     """
     Load the processed dataframe from the model directory.
 
     :param model_dir: Directory containing the .pkl file.
     :return: The processed dataframe.
     """
+    model_dir = Path(model_dir)
     data_path = model_dir / "processed_data.pkl"
     if not data_path.exists():
         raise FileNotFoundError(

@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, mock_open, patch
 from src.pipeline.train import train
 
 
-@patch("os.makedirs")
+@patch("pathlib.Path.mkdir")
 @patch("joblib.dump")
 @patch("src.pipeline.train.NearestNeighbors")
 @patch("src.pipeline.train.TfidfVectorizer")
@@ -27,7 +27,7 @@ def test_train_model(
     mock_tfidf,
     mock_knn,
     mock_dump,
-    mock_makedirs,
+    mock_mkdir,
 ):
     """
     Test the training script execution, verifying that data loading, model training,
@@ -65,4 +65,4 @@ def test_train_model(
     # Check if artifacts were saved.
     assert mock_dump.call_count == 2
     mock_df.to_pickle.assert_called_once()
-    mock_makedirs.assert_called()
+    mock_mkdir.assert_called()
