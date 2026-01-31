@@ -31,7 +31,7 @@ def test_train_model(
     mock_config.model.vectorizer_max_features = 100
     mock_config.model.top_k_recommendations = 5 # Used as n_neighbors
     mock_config.paths.processed_data = "data/processed/cleaned_anime_data.csv"
-    mock_config.paths.sentiment_model = "artifacts/sentiment_model.joblib"
+    mock_config.paths.knn_model = "artifacts/knn_model.joblib"
     mock_config.paths.vectorizer = "artifacts/vectorizer.joblib"
     mock_config.paths.vector_embeddings = "artifacts/vector_embeddings.pkl"
 

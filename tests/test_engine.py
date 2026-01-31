@@ -63,7 +63,7 @@ def test_load_models_success(mock_joblib_load, mock_exists, mock_config):
     mock_joblib_load.side_effect = ["knn_model", "tfidf_vectorizer"]
     
     # Mock config paths
-    mock_config.paths.sentiment_model = "artifacts/sentiment_model.joblib"
+    mock_config.paths.knn_model = "artifacts/knn_model.joblib"
     mock_config.paths.vectorizer = "artifacts/vectorizer.joblib"
 
     knn, vectorizer = engine.load_models()
@@ -78,7 +78,7 @@ def test_load_models_success(mock_joblib_load, mock_exists, mock_config):
 def test_load_models_file_not_found(mock_exists, mock_config):
     """Test that FileNotFoundError is raised when models are missing."""
     mock_exists.return_value = False
-    mock_config.paths.sentiment_model = "artifacts/sentiment_model.joblib"
+    mock_config.paths.knn_model = "artifacts/knn_model.joblib"
     mock_config.paths.vectorizer = "artifacts/vectorizer.joblib"
 
     with pytest.raises(FileNotFoundError):
