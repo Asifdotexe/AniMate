@@ -1,7 +1,7 @@
 [project]
-name = "animate"
-version = "0.1.0"
-description = "A Python-based anime recommendation system"
+name = "recommendationhaki"
+version = "2.0.0"
+description = "Predicting your next favorite anime before you even know it."
 authors = [
     {name = "Asif Sayyed",email = "asifdotexe@gmail.com"}
 ]

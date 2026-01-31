@@ -1,6 +1,6 @@
 """
-AniMate is a Python-based anime recommendation system
-that utilizes natural language processing (NLP) to suggest anime based on user preferences.
+RecommendationHaki (見聞色) is an intelligent anime discovery engine
+that uses Observation Haki (Matrix Factorization & KNN) to predict your next favorite show.
 """
 
 import random
@@ -88,13 +88,17 @@ def display_recommendations(recommendations: pd.DataFrame):
 
 # Landing Page
 if st.session_state.page == "landing":
-    st.title(f"Welcome to {config.app.name}!")
+    st.title(f"Welcome to {config.app.name}")
+    st.markdown("### *Predicting your next favorite anime before you even know it.*")
 
     st.caption(
-        """AniMate is a Python-based anime recommendation system
-        that utilizes natural language processing (NLP) to suggest anime based on user preferences."""
+        """
+        **RecommendationHaki (見聞色)** is an intelligent anime discovery engine designed to cure the modern plague of decision paralysis.
+        
+        Powered by high-dimensional mathematics and the **Jikan API**, it analyzes the hidden patterns in your viewing history to sense exactly what you're craving next.
+        """
     )
-
+    
     # Display logo if available
     logo_path = Path(config.paths.logo)
     if logo_path.exists():
@@ -102,11 +106,11 @@ if st.session_state.page == "landing":
 
     st.caption(
         """
-        If you enjoy our recommendations, please consider starring our repository on GitHub ⭐!
+        *Don't just watch anime. Sense it.*
         """
     )
-
-    if st.button("Recommend Me Something"):
+    
+    if st.button("Activate Haki (Start Recommendations)"):
         st.session_state.page = "recommendations"
 
     # Contributors section removed as it's not in the new config.

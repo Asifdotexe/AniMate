@@ -1,79 +1,81 @@
-# AniMate
+# RecommendationHaki (見聞色)
 
-**AniMate** is a Python-based anime recommendation system that utilizes natural language processing (NLP) to suggest anime based on user preferences.
+> **"Predicting your next favorite anime before you even know it."**
 
-## System Architecture
+**RecommendationHaki** is an intelligent anime discovery engine designed to cure the modern plague of decision paralysis.
 
-AniMate follows a modular data pipeline architecture. For a detailed overview of the system components and data flow, please refer to [ARCHITECTURE.md](ARCHITECTURE.md).
+---
 
-## Installation
+## The Inspiration
 
-To get started with AniMate, you need to install the following software:
+The project is named after **Kenbunshoku Haki (Observation Haki)** from *One Piece*; a spiritual energy that grants the user a "sixth sense" to gauge the strength of others, sense their presence, and most importantly, **predict their future moves**.
 
-- **Python**: Ensure you have Python 3.11 or higher installed. [Download Python](https://www.python.org/downloads/).
-- **Poetry**: A tool for dependency management and packaging in Python. [Install Poetry](https://python-poetry.org/docs/#installation).
-- **Git**: A version control system to manage your codebase. [Download Git for Windows](https://git-scm.com/download/win).
+Just as a Haki user can sense an incoming attack, **RecommendationHaki** analyzes the hidden patterns in your viewing history to sense exactly what you're craving next. It cuts through the noise of thousands of mediocre shows to find the "strongest" matches for your specific taste.
 
-### Clone the Repository
+## The Tech Behind the Haki
 
-To clone the repository, follow these steps:
+Under the hood, this isn't magic; it's high-dimensional mathematics.
 
-1. Open your command line interface (CLI).
-2. Run the following command:
+*   **Vector Embeddings**: We convert anime synopses, genres, and themes into high-dimensional vectors using **TF-IDF** (Term Frequency-Inverse Document Frequency).
+*   **KNN Algorithms**: We use **K-Nearest Neighbors** to map the "distance" between shows, finding the hidden narrative connections that simple genre tags miss.
+*   **Live Data**: Powered by the **Jikan API** (MyAnimeList), ensuring the database is always current.
 
+> **Don't just watch anime. Sense it.**
+
+---
+
+## Getting Started
+
+### Prerequisites
+*   Python 3.11+
+*   Poetry (Recommended) or pip
+
+### Installation
+
+1.  **Clone the Repository**
     ```bash
-    git clone https://github.com/Asifdotexe/AniMate.git
+    git clone https://github.com/Asifdotexe/RecommendationHaki.git
+    cd RecommendationHaki
     ```
 
-3. Navigate to the project directory:
-
-    ```bash
-    cd AniMate
-    ```
-
-### Install Dependencies
-
-1. Install project dependencies using Poetry:
-
+2.  **Install Dependencies**
     ```bash
     poetry install
+    # OR
+    pip install -r requirements.txt
     ```
 
-2. Run the application:
-
+3.  **Run the Training Pipeline**
+    (Optional, artifacts are included but you can regenerate them)
     ```bash
-    poetry run streamlit run app.py
+    poetry run python src/pipeline/training_pipeline.py
     ```
 
-## Contributing
-
-To contribute to the project, follow these steps:
-
-1. **Create an Issue**: If you find a bug or have a feature request, create a new issue on the GitHub repository.
-
-2. **Create a Branch**:
-    - Branch names should follow the GitFlow strategy.
-    - For a new feature: `feature/<feature-name>`
-    - For a bug fix: `bugfix/<bugfix-name>`
-
+4.  **Activate Haki (Run the App)**
     ```bash
-    git checkout -b feature/<feature-name>
+    poetry run streamlit run app/main.py
     ```
 
-3. **Commit Changes**:
-    - Make sure to commit your changes with a message referring to the issue number.
-    - Use the format: `#<issue-number> "commit message"`
+## 📂 Project Structure
 
-    ```bash
-    git add .
-    git commit -m "#<issue-number> commit message"
-    ```
+```
+RecommendationHaki/
+├── app/                  # Streamlit Application
+│   ├── main.py          # Entry point
+│   └── assets/          # Static assets (CSS, Images)
+├── src/                  # Core Logic
+│   ├── components/      # Data Ingestion, Transformation, Trainer
+│   ├── pipeline/        # Inference Engine, Training Pipeline
+│   ├── config.py        # Configuration Parser
+│   └── logger.py        # Logging Utility
+├── artifacts/            # Model & Data Artifacts (Joblib, PKL)
+├── config.yaml           # Centralized Configuration
+└── pyproject.toml        # Dependencies
+```
 
-4. **Push Changes**:
+## 🤝 Contribution
 
-    ```bash
-    git push origin feature/<feature-name>
-    ```
+Feel free to fork this repository and submit pull requests. To train your own Haki, tweak the `config.yaml` hyperparameters!
 
-5. **Create a Pull Request**:
-    - Go to the GitHub repository and create a pull request to merge your branch into the `develop` branch.
+---
+*Built with ❤️ and Haki by [Asif Sayyed](https://github.com/Asifdotexe)*

@@ -1,6 +1,6 @@
 # Global App Settings
 app:
-  name: "AniMate"
+  name: "RecommendationHaki"
   version: "2.0.0"
   debug: false
   random_seed: 42

@@ -1,5 +1,5 @@
 """
-This module provides utility functions for AniMate.
+This module provides utility functions for RecommendationHaki.
 """
 
 import gc
