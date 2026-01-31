@@ -3,9 +3,9 @@ RecommendationHaki (見聞色) is an intelligent anime discovery engine
 that uses Observation Haki (Matrix Factorization & KNN) to predict your next favorite show.
 """
 
-import random
 import sys
 from pathlib import Path
+from string import Template
 
 import pandas as pd
 import streamlit as st
@@ -21,6 +21,20 @@ if str(project_root) not in sys.path:
 from src import logger
 from src.config import config
 from src.pipeline import inference as engine
+
+
+# Helper to load templates
+def load_html_template(filename: str) -> str:
+    """
+    Loads a template file from the templates directory.
+
+    :param filename: The name of the template file to load.
+    :return: The content of the template file.
+    """
+    template_path = Path(__file__).parent / "templates" / filename
+    with open(template_path, "r", encoding="utf-8") as f:
+        return f.read()
+
 
 # Streamlit app setup
 st.set_page_config(page_title=config.app.name, page_icon="🎬")
@@ -73,33 +87,28 @@ def display_recommendations(recommendations: pd.DataFrame):
 
     st.markdown('<div class="anime-grid">', unsafe_allow_html=True)
     
-    # Grid Layout using Streamlit Columns (since generic HTML grid is hard to inject fully with clickables)
-    # Actually, for pure aesthetics, st.markdown HTML is better.
-    # Note: Streamlit buttons inside HTML are tricky. We will use a visual card only for now.
-    
+    # Load card template
+    try:
+        card_html_template = Template(load_html_template("card.html"))
+    except FileNotFoundError:
+        st.error("Template 'card.html' not found!")
+        return
+
     cols = st.columns(3) # 3 columns for grid
     
     for idx, row in recommendations.iterrows():
         with cols[idx % 3]:
-            title = row["title"]
-            score = row.get("score", "N/A")
-            synopsis = row.get("synopsis", "No synopsis available.")[:150] + "..."
-            genres = row.get("genres", "Anime")
+            # Prepared variables for template
+            context = {
+                "title": row["title"],
+                "score": row.get("score", "N/A"),
+                "synopsis": (row.get("synopsis", "No synopsis available.") or "")[:150] + "...",
+                "genres": row.get("genres", "Anime")
+            }
             
             # Using st.container for card styling wrapper
             with st.container():
-                st.markdown(f"""
-                <div class="anime-card">
-                    <div class="card-content">
-                        <div class="card-title">{title}</div>
-                        <div class="card-meta">
-                            <span>{genres}</span>
-                            <span class="match-score">{score} Match</span>
-                        </div>
-                        <p style="font-size: 0.8rem; color: #ccc; margin-top: 10px;">{synopsis}</p>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(card_html_template.substitute(context), unsafe_allow_html=True)
                 
                 # Expandable details
                 with st.expander("Explore"):
@@ -112,16 +121,11 @@ def display_recommendations(recommendations: pd.DataFrame):
 
 # Landing Page
 if st.session_state.page == "landing":
-    st.markdown("""
-<div class="hero-container">
-<h1>Recommendation Haki</h1>
-<div class="hero-subtitle">見聞色 (Observation Haki)</div>
-<p class="pitch-text">
-<br/>
-"Predicting your next favorite anime before you even know it."
-</p>
-</div>
-""", unsafe_allow_html=True)
+    try:
+        hero_html = load_html_template("hero.html")
+        st.markdown(hero_html, unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.error("Hero template not found.")
 
     # Display logo and button centered
     col1, col2, col3 = st.columns([1, 1, 1])
