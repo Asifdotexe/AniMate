@@ -12,9 +12,7 @@ References:
 
 import os
 
-# ==========================================
 # API Connection Settings
-# ==========================================
 
 # Base URL for Jikan v4
 BASE_URL = "https://api.jikan.moe/v4"
@@ -28,9 +26,13 @@ RATE_LIMIT_DELAY = 1.0
 # Jikan bans are usually temporary, but a longer backoff is polite.
 ERROR_SLEEP_TIME = 5.0
 
-# ==========================================
+# Timeout for HTTP requests in seconds
+REQUEST_TIMEOUT = 10.0
+
+# Maximum number of retries for 429 Limit errors
+MAX_RETRIES = 3
+
 # Pagination & Fetching Settings
-# ==========================================
 
 # Maximum number of items Jikan returns per page.
 ITEMS_PER_PAGE = 25
@@ -45,9 +47,7 @@ DEFAULT_FILTER_TYPE = "bypopularity"
 DEFAULT_START_PAGE = 1
 DEFAULT_PAGE_LIMIT = 20
 
-# ==========================================
 # File System Paths
-# ==========================================
 
 # Directory for raw data storage relative to the project root
 # We assume the script is run from project root, but we can make this absolute if needed.

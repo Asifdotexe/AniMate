@@ -12,7 +12,17 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from src.pipeline import api_config as config
+import sys
+# Add project root to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+try:
+    from src.pipeline import api_config as config
+except ImportError:
+    import api_config as config
 
 
 class JikanAPI:
@@ -44,22 +54,30 @@ class JikanAPI:
             "limit": config.ITEMS_PER_PAGE
         }
         
-        try:
-            response = requests.get(url, params=params)
-            
-            # Rate limiting handling
-            if response.status_code == 429:
-                print(f"Rate limited (429). Sleeping for {config.ERROR_SLEEP_TIME} seconds...")
-                time.sleep(config.ERROR_SLEEP_TIME)
-                return self.get_top_anime(page, filter_type)
-            
-            response.raise_for_status()
-            time.sleep(self.delay)
-            return response.json()
-            
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching page {page}: {e}")
-            return {}
+        retries = 0
+        while retries <= config.MAX_RETRIES:
+            try:
+                response = requests.get(url, params=params, timeout=config.REQUEST_TIMEOUT)
+                
+                # Rate limiting handling
+                if response.status_code == 429:
+                    retries += 1
+                    if retries > config.MAX_RETRIES:
+                        print(f"Max retries ({config.MAX_RETRIES}) exceeded for page {page}.")
+                        return {}
+                        
+                    print(f"Rate limited (429). Retrying {retries}/{config.MAX_RETRIES} in {config.ERROR_SLEEP_TIME}s...")
+                    time.sleep(config.ERROR_SLEEP_TIME)
+                    continue
+                
+                response.raise_for_status()
+                time.sleep(self.delay)
+                return response.json()
+                
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching page {page}: {e}")
+                return {}
+        return {}
 
 def extract_names(data_list: List[Dict[str, Any]]) -> str:
     """Helper to extract comma-separated names from a list of dicts."""
@@ -160,8 +178,9 @@ def merge_datasets(master_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFram
         return master_df
 
     # Ensure mal_id is integer for clean merging
-    master_df['mal_id'] = master_df['mal_id'].astype(int)
-    new_df['mal_id'] = new_df['mal_id'].astype(int)
+    # Handle NaNs safely by coercing to numeric and using nullable Int64
+    master_df['mal_id'] = pd.to_numeric(master_df['mal_id'], errors='coerce').astype('Int64')
+    new_df['mal_id'] = pd.to_numeric(new_df['mal_id'], errors='coerce').astype('Int64')
 
     # Separation
     new_ids = new_df['mal_id'].unique()
