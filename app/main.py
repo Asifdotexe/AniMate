@@ -118,6 +118,52 @@ def display_recommendations(recommendations: pd.DataFrame):
 
 # Landing Page
 if st.session_state.page == "landing":
+    import base64
+
+    def get_base64_image(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+
+    # Inject Background Image
+    bg_path = Path("app/assets/background.png")
+    if bg_path.exists():
+        bin_str = get_base64_image(bg_path)
+        page_bg_img = f"""
+        <style>
+        .stApp {{
+            background: transparent;
+        }}
+        .background-layer {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/png;base64,{bin_str}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(1.5px); /* Slight blur */
+            opacity: 0.25;     /* Low opacity */
+            z-index: -1;
+        }}
+        .background-overlay {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8));
+            z-index: -1;
+        }}
+        /* Remove pseudo-element approach if it conflicts */
+        .stApp::before {{ content: none; }}
+        </style>
+        <div class="background-layer"></div>
+        <div class="background-overlay"></div>
+        """
+        st.markdown(page_bg_img, unsafe_allow_html=True)
+
     try:
         hero_html = load_html_template("hero.html")
         st.markdown(hero_html, unsafe_allow_html=True)
@@ -133,6 +179,10 @@ if st.session_state.page == "landing":
 
 # Recommendations Page
 else:
+    if st.button("Home", icon=":material/home:"):
+        st.session_state.page = "landing"
+        st.rerun()
+
     st.markdown('<h1 style="margin-bottom: 0;">RECOMMENDATION HAKI</h1>', unsafe_allow_html=True)
 
     query_col, num_col = st.columns([4, 1])

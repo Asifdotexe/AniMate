@@ -41,7 +41,7 @@ h1 {
     justify-content: center;
     text-align: center;
     padding: 2rem 0;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     animation: fadeIn 1.5s ease-in-out;
 }
 
@@ -56,7 +56,7 @@ h1 {
     color: var(--text-muted);
     font-size: 1rem;
     max-width: 600px;
-    margin: 1.5rem 0;
+    margin: 1rem 0;
     /* Flexbox handles centering, but margin auto is fine too. Let's make it simple. */
     line-height: 1.6;
     text-align: center;
@@ -72,13 +72,17 @@ h1 {
     font-weight: 600 !important;
     border-radius: 4px !important;
     text-transform: uppercase;
-    transition: transform 0.2s, background-color 0.2s;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .stButton>button:hover {
-    background-color: #f40612 !important;
-    /* Lighter red */
-    transform: scale(1.05);
+    background-color: #ff1f26 !important;
+    /* Brighter red */
+    box-shadow: 0 8px 20px rgba(229, 9, 20, 0.6);
+    /* Red Haki styling glow */
+    transform: translateY(-2px);
+    /* Subtle lift */
 }
 
 /* Search Input */
