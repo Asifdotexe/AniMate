@@ -1,35 +1,23 @@
-"""
-Central configuration for AniMate.
-This module contains all the hardcoded values, paths, and constants used across the project.
-"""
-
+import yaml
 from pathlib import Path
+from box import Box
 
-# Project Root
-# Assuming this file is in src/config.py, project root is one level up
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# Paths
-DATA_DIR = PROJECT_ROOT / "data"
-RAW_DATA_DIR = DATA_DIR / "raw"
-PROCESSED_DATA_DIR = DATA_DIR / "processed"
-MODELS_DIR = PROJECT_ROOT / "models"
+def load_config(config_path: str = "config.yaml") -> Box:
+    full_path = PROJECT_ROOT / config_path
+    if not full_path.exists():
+        raise FileNotFoundError(f"Configuration file not found at: {full_path}")
 
-# Files
-MASTER_DB_FILENAME = "anime_master_db.csv"
-RAW_DATA_PATH = RAW_DATA_DIR / MASTER_DB_FILENAME
-PROCESSED_DATA_FILENAME = "anime_data_processed.csv"
-PROCESSED_DATA_PATH = PROCESSED_DATA_DIR / PROCESSED_DATA_FILENAME
-MODEL_CONFIG_FILE = PROJECT_ROOT / "config.yaml"
+    with open(full_path, "r") as f:
+        config_dict = yaml.safe_load(f)
 
-# Model Artifacts
-KNN_MODEL_FILE = "knn_model.joblib"
-TFIDF_VECTORIZER_FILE = "tfidf_vectorizer.joblib"
-PROCESSED_DATA_PKL = "processed_data.pkl"
+    _resolve_paths(config_dict, PROJECT_ROOT)
+    return Box(config_dict)
 
-# Data Processing
-REQUIRED_COLUMNS = ["title", "synopsis"]
-CATEGORY_COLUMNS = ["genres", "studio", "demographic", "source", "status"]
+def _resolve_paths(config: dict, root: Path):
+    if "paths" in config:
+        for key, value in config["paths"].items():
+            config["paths"][key] = str(root / value)
 
-# NLTK Resources
-NLTK_RESOURCES = ["corpora/stopwords", "tokenizers/punkt_tab", "tokenizers/punkt"]
+config = load_config()

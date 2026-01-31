@@ -1,50 +1,32 @@
+# Global App Settings
 app:
-  title: "AniMate"
-  page_title: "AniMate"
-  loading_phrases:
-    - "🔍 Searching for hidden gems in the anime universe..."
-    - "✨ Summoning the perfect anime recommendations..."
-    - "🎉 Gathering the coolest anime just for you..."
-    - "📚 Digging through the anime archives for you..."
-    - "🚀 Launching into the world of anime to find your match..."
-    - "🌟 Fetching the ultimate anime experience..."
-    - "🌀 Sifting through dimensions for the best recommendations..."
-    - "💫 Scouring the anime cosmos for your next favorite..."
+  name: "Animate"
+  version: "2.0.0"
+  debug: false
+  random_seed: 42
 
-data:
-  file_path: "data/final/AnimeData_25092024.csv"
-  dtypes:
-    title: "category"
-    other_name: "category"
-    genres: "category"
-    synopsis: "string"
-    studio: "category"
-    demographic: "category"
-    source: "category"
-    duration_category: "category"
-    total_duration_hours: "float32"
-    score: "float32"
-    image_url: "string"
+# Data Ingestion
+api:
+  jikan_base_url: "https://api.jikan.moe/v4"
+  batch_size: 50
+  delay_seconds: 1.0
+  max_retries: 3
 
+# File Paths (Relative to project root)
+paths:
+  raw_data: "data/raw/anime_master_db.csv"
+  processed_data: "data/processed/cleaned_anime_data.csv"
+  
+  # Artifacts
+  vectorizer: "artifacts/vectorizer.joblib"
+  vector_embeddings: "artifacts/vector_embeddings.pkl"
+  knn_model: "artifacts/knn_model.joblib"
+
+  # Static Assets
+  logo: "app/assets/logo.png"
+  css: "app/assets/styles.css"
+
+# Model Hyperparameters
 model:
-  max_features: 5000
-  n_neighbors: 5
-  metric: "cosine"
-  default_top_n: 5
-
-contributors:
-  - name: "Asif Sayyed"
-    github: "https://github.com/Asifdotexe"
-    image: "https://avatars.githubusercontent.com/u/115421661?v=4"
-  - name: "Pranjal Dhamane"
-    github: "https://github.com/PranjalDhamane"
-    image: "https://avatars.githubusercontent.com/u/131870182?v=4"
-  - name: "Tanvi Sivaraj"
-    github: "https://github.com/tanvisivaraj"
-    image: "https://avatars.githubusercontent.com/u/132070958?v=4"
-  - name: "Shrawani Thakur"
-    github: "https://github.com/str04"
-    image: "https://avatars.githubusercontent.com/u/123924840?v=4"
-  - name: "Aditi Mane"
-    github: "https://github.com/aditimane07"
-    image: "https://avatars.githubusercontent.com/u/129670339?v=4"
+  top_k_recommendations: 10
+  vectorizer_max_features: 5000

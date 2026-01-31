@@ -2,48 +2,46 @@
 Module for testing the training script.
 """
 
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
-from src.pipeline.train import train
+from src.components.trainer import train
 
 
+@patch("src.components.trainer.config")
 @patch("pathlib.Path.mkdir")
 @patch("joblib.dump")
-@patch("src.pipeline.train.NearestNeighbors")
-@patch("src.pipeline.train.TfidfVectorizer")
+@patch("src.components.trainer.NearestNeighbors")
+@patch("src.components.trainer.TfidfVectorizer")
 @patch("pandas.read_csv")
-@patch("os.path.exists")
-@patch(
-    "builtins.open",
-    new_callable=mock_open,
-    read_data="model:\n  max_features: 100\n  n_neighbors: 5\n",
-)
-@patch("yaml.safe_load")
+@patch("pathlib.Path.exists")  # Patch Path.exists for processed data check
 def test_train_model(
-    mock_yaml,
-    mock_open_file,
     mock_exists,
     mock_read_csv,
     mock_tfidf,
     mock_knn,
     mock_dump,
     mock_mkdir,
+    mock_config,
 ):
     """
     Test the training script execution, verifying that data loading, model training,
     and artifact saving are orchestrated correctly.
     """
     # Setup mocks
-    mock_yaml.return_value = {
-        "model": {"max_features": 100, "n_neighbors": 5, "metric": "cosine"}
-    }
+    mock_config.model.vectorizer_max_features = 100
+    mock_config.model.top_k_recommendations = 5 # Used as n_neighbors
+    mock_config.paths.processed_data = "data/processed/cleaned_anime_data.csv"
+    mock_config.paths.sentiment_model = "artifacts/sentiment_model.joblib"
+    mock_config.paths.vectorizer = "artifacts/vectorizer.joblib"
+    mock_config.paths.vector_embeddings = "artifacts/vector_embeddings.pkl"
+
     mock_exists.return_value = True  # Processed data exists
 
     # Mock DataFrame
     mock_df = MagicMock()
-    mock_df.columns = ["Title", "Synopsis"]
-    # Mock apply for stemming
-    mock_df.__getitem__.return_value = mock_df  # simplistic
+    mock_df.columns = ["Title", "Synopsis", "stemmed_synopsis"] # ensure 'stemmed_synopsis' exists to avoid calling preprocess
+    # Mock apply for stemming (not called if 'stemmed_synopsis' exists, but if it did)
+    mock_df.__getitem__.return_value = mock_df
     mock_read_csv.return_value = mock_df
 
     # Mock Vectorizer and KNN
@@ -65,4 +63,5 @@ def test_train_model(
     # Check if artifacts were saved.
     assert mock_dump.call_count == 2
     mock_df.to_pickle.assert_called_once()
-    mock_mkdir.assert_called()
+    assert mock_mkdir.call_count >= 1 # We mkdir multiple times
+
