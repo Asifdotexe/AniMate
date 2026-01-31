@@ -20,6 +20,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from src.preprocessing import preprocess_text
+from src import config
 
 
 def load_config() -> dict:
@@ -27,7 +28,7 @@ def load_config() -> dict:
 
     :return: Configuration dictionary.
     """
-    config_path = os.path.join(project_root, "config.yaml")
+    config_path = config.MODEL_CONFIG_FILE
     with open(config_path, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
         if not isinstance(cfg, dict):
@@ -50,7 +51,7 @@ def load_processed_data(data_path: str) -> pd.DataFrame:
     df = pd.read_csv(data_path)
 
     # Memory Optimization: explicit cast to category
-    for col in ["genres", "studio", "demographic", "source", "status"]:
+    for col in config.CATEGORY_COLUMNS:
         if col in df.columns:
             df[col] = df[col].astype("category")
 
@@ -99,9 +100,9 @@ def save_artifacts(models_dir: str, knn: NearestNeighbors, vectorizer: TfidfVect
     :param df: DataFrame with processed data.
     """
     os.makedirs(models_dir, exist_ok=True)
-    joblib.dump(knn, os.path.join(models_dir, "knn_model.joblib"))
-    joblib.dump(vectorizer, os.path.join(models_dir, "tfidf_vectorizer.joblib"))
-    df.to_pickle(os.path.join(models_dir, "processed_data.pkl"))
+    joblib.dump(knn, os.path.join(models_dir, config.KNN_MODEL_FILE))
+    joblib.dump(vectorizer, os.path.join(models_dir, config.TFIDF_VECTORIZER_FILE))
+    df.to_pickle(os.path.join(models_dir, config.PROCESSED_DATA_PKL))
     print(f"Artifacts saved to {models_dir}")
 
 
@@ -110,14 +111,14 @@ def train():
     print("Loading configuration...")
     
     try:
-        config = load_config()
+        model_config = load_config()
 
-        data_path = os.path.join(project_root, "data", "processed", "anime_data_processed.csv")
+        data_path = config.PROCESSED_DATA_PATH
         df = load_processed_data(data_path)
 
-        knn_model, vectorizer = train_knn_model(df, config)
+        knn_model, vectorizer = train_knn_model(df, model_config)
 
-        models_dir = os.path.join(project_root, "models")
+        models_dir = config.MODELS_DIR
         save_artifacts(models_dir, knn_model, vectorizer, df)
         
     except Exception:

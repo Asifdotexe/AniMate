@@ -7,8 +7,10 @@ from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 
+from src import config
+
 # Ensure necessary NLTK data packages are downloaded
-for resource in ["corpora/stopwords", "tokenizers/punkt_tab", "tokenizers/punkt"]:
+for resource in config.NLTK_RESOURCES:
     try:
         nltk.data.find(resource)
     except LookupError:

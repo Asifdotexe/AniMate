@@ -18,6 +18,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from src.preprocessing import preprocess_text
+from src import config
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -28,7 +29,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     :return: Cleaned DataFrame.
     """
     # Validate required columns
-    required_columns = ["title", "synopsis"]
+    required_columns = config.REQUIRED_COLUMNS
     # Be case-insensitive for columns
     df.columns = df.columns.str.strip().str.lower()
     
@@ -71,8 +72,8 @@ def main():
     """
     Main execution flow for data processing.
     """
-    raw_file = os.path.join(project_root, "data", "raw", "anime_master_db.csv")
-    processed_dir = os.path.join(project_root, "data", "processed")
+    raw_file = config.RAW_DATA_PATH
+    processed_dir = config.PROCESSED_DATA_DIR
     os.makedirs(processed_dir, exist_ok=True)
 
     if not os.path.exists(raw_file):
@@ -92,12 +93,12 @@ def main():
     df_processed = process_features(df_clean)
 
     # Memory Optimization: Convert object columns to category
-    category_columns = ["genres", "studio", "demographic", "source", "status"]
+    category_columns = config.CATEGORY_COLUMNS
     for col in category_columns:
         if col in df_processed.columns:
             df_processed[col] = df_processed[col].astype("category")
 
-    output_path = os.path.join(processed_dir, "anime_data_processed.csv")
+    output_path = config.PROCESSED_DATA_PATH
     df_processed.to_csv(output_path, index=False)
     print(f"Processed data saved to {output_path}")
 
