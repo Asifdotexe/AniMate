@@ -1,8 +1,14 @@
-import yaml
+"""
+Configuration file parser for AniMate.
+"""
+
 from pathlib import Path
+
+import yaml
 from box import Box
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 def load_config(config_path: str = "config.yaml") -> Box:
     full_path = PROJECT_ROOT / config_path
@@ -15,9 +21,11 @@ def load_config(config_path: str = "config.yaml") -> Box:
     _resolve_paths(config_dict, PROJECT_ROOT)
     return Box(config_dict)
 
+
 def _resolve_paths(config: dict, root: Path):
     if "paths" in config:
         for key, value in config["paths"].items():
             config["paths"][key] = str(root / value)
+
 
 config = load_config()

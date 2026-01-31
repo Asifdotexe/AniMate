@@ -3,7 +3,7 @@
 This directory contains the sequential data pipeline for the AniMate project.
 
 ## 1. Data Collection (Upsert)
-Fetch popular anime data using the Jikan API (v4). 
+Fetch popular anime data using the Jikan API (v4).
 This script implements an **Upsert** strategy:
 - Updates existing anime in `data/raw/anime_master_db.csv`
 - Appends new unique anime found in the API response.

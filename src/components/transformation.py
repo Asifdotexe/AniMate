@@ -4,13 +4,13 @@ This script loads the latest raw data, cleans it, applies text preprocessing,
 and saves the result to data/processed.
 """
 
-import sys
 from pathlib import Path
+
 import nltk
+import pandas as pd
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
-import pandas as pd
 from tqdm import tqdm
 
 from src.config import config
@@ -20,7 +20,16 @@ logger = setup_logging("transformation")
 
 # Constants
 REQUIRED_COLUMNS = ["title", "synopsis"]
-CATEGORY_COLUMNS = ["type", "source", "rating", "status", "premiered", "genre", "studio", "producer"]
+CATEGORY_COLUMNS = [
+    "type",
+    "source",
+    "rating",
+    "status",
+    "premiered",
+    "genre",
+    "studio",
+    "producer",
+]
 NLTK_RESOURCES = ["corpora/stopwords", "tokenizers/punkt_tab", "tokenizers/punkt"]
 
 # NLTK Setup
@@ -62,7 +71,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     # Validate required columns
     # Be case-insensitive for columns
     df.columns = df.columns.str.strip().str.lower()
-    
+
     for col in REQUIRED_COLUMNS:
         if col not in df.columns:
             raise KeyError(f"Missing required column: {col}")

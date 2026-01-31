@@ -32,21 +32,23 @@ def load_processed_data(data_path: Path) -> pd.DataFrame:
     :return: DataFrame with processed data.
     """
     if not data_path.exists():
-        raise FileNotFoundError(f"Processed data not found at {data_path}. Run src/components/transformation.py first.")
+        raise FileNotFoundError(
+            f"Processed data not found at {data_path}. Run src/components/transformation.py first."
+        )
 
     df = pd.read_csv(data_path)
 
     # Memory Optimization: explicit cast to category
-    # CATEGORY_COLUMNS are defined in transformation, but we can access config if added, 
-    # or better, just rely on what's there or duplicate constant. 
+    # CATEGORY_COLUMNS are defined in transformation, but we can access config if added,
+    # or better, just rely on what's there or duplicate constant.
     # Config file didn't explicitly list category cols, but original code used config.CATEGORY_COLUMNS.
     # I'll rely on the transformation logic having done this, or just skip re-casting unless necessary.
-    # To be safe, let's skip re-casting here as transformation.py does it before saving, 
-    # and CSV might lose it but `read_csv` will infer. 
-    # Wait, read_csv doesn't infer category. 
+    # To be safe, let's skip re-casting here as transformation.py does it before saving,
+    # and CSV might lose it but `read_csv` will infer.
+    # Wait, read_csv doesn't infer category.
     # I will import CATEGORY_COLUMNS from transformation if possible.
     from src.components.transformation import CATEGORY_COLUMNS
-    
+
     for col in CATEGORY_COLUMNS:
         if col in df.columns:
             df[col] = df[col].astype("category")
@@ -56,7 +58,7 @@ def load_processed_data(data_path: Path) -> pd.DataFrame:
         logger.info("Regenerating stemmed_synopsis...")
         df["synopsis"] = df["synopsis"].fillna("")
         df["stemmed_synopsis"] = df["synopsis"].apply(preprocess_text)
-    
+
     df["stemmed_synopsis"] = df["stemmed_synopsis"].fillna("")
     return df
 
@@ -68,30 +70,31 @@ def train_knn_model(df: pd.DataFrame) -> tuple[NearestNeighbors, TfidfVectorizer
     :return: Tuple of K-NN model and TfidfVectorizer.
     """
     model_cfg = config.model
-    
+
     logger.info("Vectorizing data...")
     vectorizer = TfidfVectorizer(
-        stop_words="english", 
-        max_features=model_cfg.vectorizer_max_features
+        stop_words="english", max_features=model_cfg.vectorizer_max_features
     )
     # Ensure stemmed_synopsis is string
     tfidf_matrix = vectorizer.fit_transform(df["stemmed_synopsis"].astype(str))
 
     logger.info("Training model...")
     knn = NearestNeighbors(
-        n_neighbors=model_cfg.top_k_recommendations, # Using top_k as n_neighbors? Original used n_neighbors from config.
+        n_neighbors=model_cfg.top_k_recommendations,  # Using top_k as n_neighbors? Original used n_neighbors from config.
         # Original config had `n_neighbors: 5`. New config has `top_k_recommendations: 10`.
         # I'll use top_k_recommendations or defaults.
         # Actually n_neighbors for KNN usually matches retrieval count or slightly more.
         # I'll use top_k_recommendations.
-        metric="cosine", # Hardcoded or default
+        metric="cosine",  # Hardcoded or default
     )
     knn.fit(tfidf_matrix)
-    
+
     return knn, vectorizer
 
 
-def save_artifacts(knn: NearestNeighbors, vectorizer: TfidfVectorizer, df: pd.DataFrame):
+def save_artifacts(
+    knn: NearestNeighbors, vectorizer: TfidfVectorizer, df: pd.DataFrame
+):
     """Save model artifacts and processed data.
 
     :param knn: K-NN model.
@@ -116,7 +119,7 @@ def save_artifacts(knn: NearestNeighbors, vectorizer: TfidfVectorizer, df: pd.Da
 def train():
     """Main training execution."""
     logger.info("Starting model training...")
-    
+
     try:
         data_path = Path(config.paths.processed_data)
         df = load_processed_data(data_path)
@@ -124,9 +127,10 @@ def train():
         knn_model, vectorizer = train_knn_model(df)
 
         save_artifacts(knn_model, vectorizer, df)
-        
+
     except Exception:
         import traceback
+
         logger.error(f"Training failed:\n{traceback.format_exc()}")
         sys.exit(1)
 

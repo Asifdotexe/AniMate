@@ -19,8 +19,8 @@ if str(project_root) not in sys.path:
     sys.path.append(str(project_root))
 
 from src import logger
-from src.pipeline import inference as engine
 from src.config import config
+from src.pipeline import inference as engine
 
 # Streamlit app setup
 st.set_page_config(page_title=config.app.name, page_icon="🎬")
@@ -49,7 +49,9 @@ def load_resources():
         return data, knn_model, tfidf_vectorizer
     except FileNotFoundError as e:
         st.error(f"Error loading models: {e}")
-        st.info("Run 'python src/pipeline/training_pipeline.py' to generate model artifacts.")
+        st.info(
+            "Run 'python src/pipeline/training_pipeline.py' to generate model artifacts."
+        )
         st.stop()
 
 
@@ -71,12 +73,18 @@ def display_recommendations(recommendations: pd.DataFrame):
         return
 
     columns_to_show = [
-        "genres", "synopsis", "studio", "demographic", 
-        "source", "score", "episodes", "release year"
+        "genres",
+        "synopsis",
+        "studio",
+        "demographic",
+        "source",
+        "score",
+        "episodes",
+        "release year",
     ]
 
     for _, row in recommendations.iterrows():
-        title = row['title']
+        title = row["title"]
         with st.expander(f"**{title}**"):
             # Dynamic column display
             for col in columns_to_show:
@@ -93,7 +101,7 @@ if st.session_state.page == "landing":
         """AniMate is a Python-based anime recommendation system
         that utilizes natural language processing (NLP) to suggest anime based on user preferences."""
     )
-    
+
     # Display logo if available
     logo_path = Path(config.paths.logo)
     if logo_path.exists():
@@ -104,7 +112,7 @@ if st.session_state.page == "landing":
         If you enjoy our recommendations, please consider starring our repository on GitHub ⭐!
         """
     )
-    
+
     if st.button("Recommend Me Something"):
         st.session_state.page = "recommendations"
 
@@ -136,7 +144,7 @@ else:
             st.warning("Please enter a valid query to get recommendations.")
         else:
             st.write("### Recommendations based on your input:")
-            
+
             with st.spinner("Finding anime for you..."):
                 results = engine.get_recommendations(
                     user_query,
@@ -145,5 +153,5 @@ else:
                     data,
                     top_n=num_recommendations,
                 )
-            
+
             display_recommendations(results)

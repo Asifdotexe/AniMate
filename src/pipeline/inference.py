@@ -44,10 +44,10 @@ def load_processed_data() -> pd.DataFrame:
 
     :return: The processed dataframe.
     """
-    data_path = Path(config.paths.vector_embeddings) 
+    data_path = Path(config.paths.vector_embeddings)
     # Note: user instruction said vector_embeddings.pkl, old code loaded processed_data.pkl.
     # We renamed processed_data.pkl to vector_embeddings.pkl in step 1.
-    
+
     if not data_path.exists():
         raise FileNotFoundError(
             f"Embeddings data not found at {data_path}. Please run src/components/trainer.py first."
@@ -73,7 +73,7 @@ def _filter_by_query(df: pd.DataFrame, query: str) -> pd.DataFrame:
     # Exclude the query itself if it appears in results
     mask = ~df["title"].str.contains(query, case=False, na=False, regex=False)
     filtered = df[mask]
-    
+
     return filtered if not filtered.empty else df
 
 
@@ -104,12 +104,12 @@ def get_recommendations(
 
     # Use iloc to get rows, copy to avoid SettingWithCopyWarning
     recommendations = data.iloc[indices[0]].copy()
-    
+
     # Filter and sort
     final_recommendations = _filter_by_query(recommendations, query)
-    
+
     if "score" not in final_recommendations.columns:
-         # Fallback verification
+        # Fallback verification
         raise ValueError("The 'score' column is missing. Cannot sort recommendations.")
 
     final_recommendations = final_recommendations.sort_values(

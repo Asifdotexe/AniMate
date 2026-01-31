@@ -1,6 +1,6 @@
 # Global App Settings
 app:
-  name: "Animate"
+  name: "AniMate"
   version: "2.0.0"
   debug: false
   random_seed: 42
@@ -16,7 +16,7 @@ api:
 paths:
   raw_data: "data/raw/anime_master_db.csv"
   processed_data: "data/processed/cleaned_anime_data.csv"
-  
+
   # Artifacts
   vectorizer: "artifacts/vectorizer.joblib"
   vector_embeddings: "artifacts/vector_embeddings.pkl"

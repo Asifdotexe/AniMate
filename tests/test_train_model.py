@@ -29,7 +29,7 @@ def test_train_model(
     """
     # Setup mocks
     mock_config.model.vectorizer_max_features = 100
-    mock_config.model.top_k_recommendations = 5 # Used as n_neighbors
+    mock_config.model.top_k_recommendations = 5  # Used as n_neighbors
     mock_config.paths.processed_data = "data/processed/cleaned_anime_data.csv"
     mock_config.paths.knn_model = "artifacts/knn_model.joblib"
     mock_config.paths.vectorizer = "artifacts/vectorizer.joblib"
@@ -39,7 +39,11 @@ def test_train_model(
 
     # Mock DataFrame
     mock_df = MagicMock()
-    mock_df.columns = ["Title", "Synopsis", "stemmed_synopsis"] # ensure 'stemmed_synopsis' exists to avoid calling preprocess
+    mock_df.columns = [
+        "Title",
+        "Synopsis",
+        "stemmed_synopsis",
+    ]  # ensure 'stemmed_synopsis' exists to avoid calling preprocess
     # Mock apply for stemming (not called if 'stemmed_synopsis' exists, but if it did)
     mock_df.__getitem__.return_value = mock_df
     mock_read_csv.return_value = mock_df
@@ -63,5 +67,4 @@ def test_train_model(
     # Check if artifacts were saved.
     assert mock_dump.call_count == 2
     mock_df.to_pickle.assert_called_once()
-    assert mock_mkdir.call_count >= 1 # We mkdir multiple times
-
+    assert mock_mkdir.call_count >= 1  # We mkdir multiple times

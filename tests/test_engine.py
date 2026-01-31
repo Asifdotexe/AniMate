@@ -17,7 +17,6 @@ def mock_data():
         {
             "title": ["Anime A", "Anime B", "Anime C"],
             "synopsis": ["Synopsis A", "Synopsis B", "Synopsis C"],
-            # Simulating other columns
             "other_cols": [1, 2, 3],
         }
     )
@@ -61,7 +60,7 @@ def test_load_models_success(mock_joblib_load, mock_exists, mock_config):
     """Test successful loading of models."""
     mock_exists.return_value = True
     mock_joblib_load.side_effect = ["knn_model", "tfidf_vectorizer"]
-    
+
     # Mock config paths
     mock_config.paths.knn_model = "artifacts/knn_model.joblib"
     mock_config.paths.vectorizer = "artifacts/vectorizer.joblib"
@@ -98,4 +97,3 @@ def test_load_processed_data(mock_read_pickle, mock_exists, mock_config):
 
     assert not df.empty
     assert list(df.columns) == ["col"]
-

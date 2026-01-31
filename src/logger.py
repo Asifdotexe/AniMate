@@ -8,8 +8,8 @@ import sys
 
 import psutil
 
-
 from src.config import config
+
 
 def setup_logging(name: str) -> logging.Logger:
     """
