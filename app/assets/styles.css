@@ -1,15 +1,163 @@
-/* styles.css */
+/* Otaku Stream Theme (Netflix-Inspired) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Bebas+Neue&display=swap');
 
-/* Style for button hover */
-.stButton button:hover {
-    background-color: #28a745; /* Green color on hover */
-    color: white; /* Text color on hover */
-    border: 1px solid #218838; /* Darker green border on hover */
+:root {
+    --bg-color: #141414;
+    --card-bg: #1f1f1f;
+    --accent-color: #E50914;
+    /* Cardinal Red */
+    --text-color: #FFFFFF;
+    --text-muted: #B3B3B3;
+    --font-primary: 'Inter', sans-serif;
+    --font-heading: 'Bebas Neue', sans-serif;
 }
 
-/* Style for text input and number input */
-.stTextInput,
-.stNumberInput {
-    display: inline-block;
-    margin-right: 10px;
+/* Global Reset & Streamlit Overrides */
+.stApp {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-primary);
+}
+
+h1,
+h2,
+h3 {
+    font-family: var(--font-heading) !important;
+    letter-spacing: 1px;
+}
+
+h1 {
+    color: var(--accent-color) !important;
+    font-size: 3.5rem !important;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom Hero Section */
+.hero-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    animation: fadeIn 1.5s ease-in-out;
+}
+
+.hero-subtitle {
+    color: var(--text-color);
+    font-size: 1.2rem;
+    margin-top: -10px;
+    font-weight: 300;
+}
+
+.pitch-text {
+    color: var(--text-muted);
+    font-size: 1rem;
+    max-width: 600px;
+    margin: 1.5rem 0;
+    /* Flexbox handles centering, but margin auto is fine too. Let's make it simple. */
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* Buttons (Netflix Style) */
+.stButton>button {
+    background-color: var(--accent-color) !important;
+    color: white !important;
+    border: none !important;
+    padding: 0.6rem 2rem !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+    text-transform: uppercase;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+.stButton>button:hover {
+    background-color: #f40612 !important;
+    /* Lighter red */
+    transform: scale(1.05);
+}
+
+/* Search Input */
+.stTextInput>div>div>input {
+    background-color: #333 !important;
+    color: white !important;
+    border: 1px solid #333 !important;
+}
+
+.stTextInput>div>div>input:focus {
+    border-color: var(--accent-color) !important;
+}
+
+/* Anime Cards (Grid Layout) */
+.anime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.anime-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.anime-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+.card-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+}
+
+.card-content {
+    padding: 1rem;
+}
+
+.card-title {
+    font-family: var(--font-primary);
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.match-score {
+    color: #46d369;
+    /* Netflix Match Green */
+    font-weight: 800;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

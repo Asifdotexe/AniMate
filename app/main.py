@@ -29,7 +29,13 @@ st.set_page_config(page_title=config.app.name, page_icon="🎬")
 css_path = Path(config.paths.css)
 if css_path.exists():
     with open(file=css_path, mode="r", encoding="utf-8") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+        custom_css = f.read()
+        
+    st.markdown(
+        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/collection/components/icon/icon.min.css">',
+        unsafe_allow_html=True
+    )
+    st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
 
 # Initialize session state for navigation
 if "page" not in st.session_state:
@@ -60,64 +66,73 @@ data, knn_model, tfidf_vectorizer = load_resources()
 
 
 def display_recommendations(recommendations: pd.DataFrame):
-    """Display the list of recommended anime."""
+    """Display the list of recommended anime as a grid of cards."""
     if recommendations.empty:
         st.warning("No recommendations found. Please try a different query.")
         return
 
-    columns_to_show = [
-        "genres",
-        "synopsis",
-        "studio",
-        "demographic",
-        "source",
-        "score",
-        "episodes",
-        "release year",
-    ]
+    st.markdown('<div class="anime-grid">', unsafe_allow_html=True)
+    
+    # Grid Layout using Streamlit Columns (since generic HTML grid is hard to inject fully with clickables)
+    # Actually, for pure aesthetics, st.markdown HTML is better.
+    # Note: Streamlit buttons inside HTML are tricky. We will use a visual card only for now.
+    
+    cols = st.columns(3) # 3 columns for grid
+    
+    for idx, row in recommendations.iterrows():
+        with cols[idx % 3]:
+            title = row["title"]
+            score = row.get("score", "N/A")
+            synopsis = row.get("synopsis", "No synopsis available.")[:150] + "..."
+            genres = row.get("genres", "Anime")
+            
+            # Using st.container for card styling wrapper
+            with st.container():
+                st.markdown(f"""
+                <div class="anime-card">
+                    <div class="card-content">
+                        <div class="card-title">{title}</div>
+                        <div class="card-meta">
+                            <span>{genres}</span>
+                            <span class="match-score">{score} Match</span>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #ccc; margin-top: 10px;">{synopsis}</p>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Expandable details
+                with st.expander("Explore"):
+                     st.write(f"**Studio:** {row.get('studio', 'N/A')}")
+                     st.write(f"**Episodes:** {row.get('episodes', 'N/A')}")
+                     st.write(f"**Year:** {row.get('release year', 'N/A')}")
 
-    for _, row in recommendations.iterrows():
-        title = row["title"]
-        with st.expander(f"**{title}**"):
-            # Dynamic column display
-            for col in columns_to_show:
-                if col in row.index and pd.notna(row[col]):
-                    label = col.replace("_", " ").title()
-                    st.write(f"**{label}:** {row[col]}")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # Landing Page
 if st.session_state.page == "landing":
-    st.title(f"Welcome to {config.app.name}")
-    st.markdown("### *Predicting your next favorite anime before you even know it.*")
+    st.markdown("""
+<div class="hero-container">
+<h1>Recommendation Haki</h1>
+<div class="hero-subtitle">見聞色 (Observation Haki)</div>
+<p class="pitch-text">
+<br/>
+"Predicting your next favorite anime before you even know it."
+</p>
+</div>
+""", unsafe_allow_html=True)
 
-    st.caption(
-        """
-        **RecommendationHaki (見聞色)** is an intelligent anime discovery engine designed to cure the modern plague of decision paralysis.
-        
-        Powered by high-dimensional mathematics and the **Jikan API**, it analyzes the hidden patterns in your viewing history to sense exactly what you're craving next.
-        """
-    )
+    # Display logo and button centered
+    col1, col2, col3 = st.columns([1, 1, 1])
     
-    # Display logo if available
-    logo_path = Path(config.paths.logo)
-    if logo_path.exists():
-        st.image(str(logo_path), width=200)
-
-    st.caption(
-        """
-        *Don't just watch anime. Sense it.*
-        """
-    )
-    
-    if st.button("Activate Haki (Start Recommendations)"):
-        st.session_state.page = "recommendations"
-
-    # Contributors section removed as it's not in the new config.
+    with col2:
+        if st.button("ACTIVATE HAKI", use_container_width=True):
+             st.session_state.page = "recommendations"
 
 # Recommendations Page
 else:
-    st.title(config.app.name)
+    st.markdown('<h1 style="margin-bottom: 0;">RECOMMENDATION HAKI</h1>', unsafe_allow_html=True)
 
     query_col, num_col = st.columns([4, 1])
     with query_col:
