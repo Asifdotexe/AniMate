@@ -4,21 +4,23 @@ This script loads the latest raw data, cleans it, applies text preprocessing,
 and saves the result to data/processed.
 """
 
-import glob
-import os
 import sys
+from pathlib import Path
 
 import pandas as pd
 from tqdm import tqdm
 
 # Add project root to sys.path to import src modules
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
-if project_root not in sys.path:
-    sys.path.append(project_root)
+current_dir = Path(__file__).resolve().parent
+project_root = current_dir.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
 
 from src.preprocessing import preprocess_text
 from src import config
+from src.utils import setup_logging
+
+logger = setup_logging("process_data")
 
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -74,21 +76,21 @@ def main():
     """
     raw_file = config.RAW_DATA_PATH
     processed_dir = config.PROCESSED_DATA_DIR
-    os.makedirs(processed_dir, exist_ok=True)
+    processed_dir.mkdir(parents=True, exist_ok=True)
 
-    if not os.path.exists(raw_file):
-        print(f"Error: Master DB not found at {raw_file}")
+    if not raw_file.exists():
+        logger.error(f"Error: Master DB not found at {raw_file}")
         return
 
-    print(f"Processing master database: {raw_file}")
+    logger.info(f"Processing master database: {raw_file}")
     df = pd.read_csv(raw_file)
-    print(f"Loaded {len(df)} rows.")
+    logger.info(f"Loaded {len(df)} rows.")
 
     # Clean column names
     df.columns = df.columns.str.strip().str.lower()
 
     df_clean = clean_data(df)
-    print(f"Cleaned data: {len(df_clean)} rows.")
+    logger.info(f"Cleaned data: {len(df_clean)} rows.")
 
     df_processed = process_features(df_clean)
 
@@ -100,7 +102,7 @@ def main():
 
     output_path = config.PROCESSED_DATA_PATH
     df_processed.to_csv(output_path, index=False)
-    print(f"Processed data saved to {output_path}")
+    logger.info(f"Processed data saved to {output_path}")
 
 
 if __name__ == "__main__":

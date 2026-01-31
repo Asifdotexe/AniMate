@@ -4,9 +4,9 @@ This script builds a local dataset of anime, supporting incremental updates.
 It fetches data from the /top/anime endpoint and merges it with an existing master dataset.
 """
 
-import os
 import time
 from typing import Dict, List, Any
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -14,10 +14,14 @@ from tqdm import tqdm
 
 import sys
 # Add project root to sys.path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
-if project_root not in sys.path:
-    sys.path.append(project_root)
+current_dir = Path(__file__).resolve().parent
+project_root = current_dir.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
+
+from src.utils import setup_logging
+
+logger = setup_logging("collect_api")
 
 try:
     from src.pipeline import api_config as config
@@ -63,10 +67,10 @@ class JikanAPI:
                 if response.status_code == 429:
                     retries += 1
                     if retries > config.MAX_RETRIES:
-                        print(f"Max retries ({config.MAX_RETRIES}) exceeded for page {page}.")
+                        logger.error(f"Max retries ({config.MAX_RETRIES}) exceeded for page {page}.")
                         return {}
                         
-                    print(f"Rate limited (429). Retrying {retries}/{config.MAX_RETRIES} in {config.ERROR_SLEEP_TIME}s...")
+                    logger.warning(f"Rate limited (429). Retrying {retries}/{config.MAX_RETRIES} in {config.ERROR_SLEEP_TIME}s...")
                     time.sleep(config.ERROR_SLEEP_TIME)
                     continue
                 
@@ -75,7 +79,7 @@ class JikanAPI:
                 return response.json()
                 
             except requests.exceptions.RequestException as e:
-                print(f"Error fetching page {page}: {e}")
+                logger.error(f"Error fetching page {page}: {e}")
                 return {}
         return {}
 
@@ -140,15 +144,15 @@ def build_anime_dataset(start_page: int = config.DEFAULT_START_PAGE, limit_pages
     api = JikanAPI()
     all_anime = []
 
-    print(f"Starting ingestion of Top Anime ({config.DEFAULT_FILTER_TYPE})...")
-    print(f"Target: Pages {start_page} to {start_page + limit_pages - 1}")
+    logger.info(f"Starting ingestion of Top Anime ({config.DEFAULT_FILTER_TYPE})...")
+    logger.info(f"Target: Pages {start_page} to {start_page + limit_pages - 1}")
 
     for page in tqdm(range(start_page, start_page + limit_pages), desc="Fetching Pages"):
         data = api.get_top_anime(page, filter_type=config.DEFAULT_FILTER_TYPE)
         
         items = data.get("data", [])
         if not items:
-            print(f"No data found on page {page}. Stopping early.")
+            logger.info(f"No data found on page {page}. Stopping early.")
             break
             
         for item in items:
@@ -158,11 +162,11 @@ def build_anime_dataset(start_page: int = config.DEFAULT_START_PAGE, limit_pages
         # Pagination check
         pagination = data.get("pagination", {})
         if not pagination.get("has_next_page", False):
-            print("Reached last page of results.")
+            logger.info("Reached last page of results.")
             break
 
     df = pd.DataFrame(all_anime)
-    print(f"Fetched {len(df)} anime records from API.")
+    logger.info(f"Fetched {len(df)} anime records from API.")
     return df
 
 def merge_datasets(master_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFrame:
@@ -195,29 +199,29 @@ def merge_datasets(master_df: pd.DataFrame, new_df: pd.DataFrame) -> pd.DataFram
     if 'Popularity' in merged_df.columns:
         merged_df = merged_df.sort_values('Popularity', ascending=True)
 
-    print(f"Merged: {len(master_preserved)} retained + {len(new_df)} updated/new = {len(merged_df)} total records.")
+    logger.info(f"Merged: {len(master_preserved)} retained + {len(new_df)} updated/new = {len(merged_df)} total records.")
     return merged_df
 
-def load_master_dataset(filepath: str) -> pd.DataFrame:
+def load_master_dataset(filepath: Path) -> pd.DataFrame:
     """Loads the existing master dataset if it exists."""
-    if os.path.exists(filepath):
-        print(f"Loading existing master dataset from {filepath}...")
+    if filepath.exists():
+        logger.info(f"Loading existing master dataset from {filepath}...")
         try:
             return pd.read_csv(filepath)
         except Exception as e:
-            print(f"Error loading master dataset: {e}. Starting fresh.")
+            logger.error(f"Error loading master dataset: {e}. Starting fresh.")
             return pd.DataFrame()
     return pd.DataFrame()
 
-def save_dataset(df: pd.DataFrame, filepath: str):
+def save_dataset(df: pd.DataFrame, filepath: Path):
     """Saves the dataframe to CSV."""
     if df.empty:
-        print("DataFrame is empty. Nothing to save.")
+        logger.warning("DataFrame is empty. Nothing to save.")
         return
 
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(filepath, index=False)
-    print(f"Master dataset updated at: {filepath}")
+    logger.info(f"Master dataset updated at: {filepath}")
 
 def main():
     """
@@ -236,9 +240,9 @@ def main():
     final_df = merge_datasets(master_df, new_data_df)
     
     # Save
-    save_dataset(final_df, config.MASTER_DB_PATH)
+    save_dataset(final_df, Path(config.MASTER_DB_PATH))
     
-    print(f"Pipeline complete. Master database updated with {len(new_data_df)} fetched records.")
+    logger.info(f"Pipeline complete. Master database updated with {len(new_data_df)} fetched records.")
 
 if __name__ == "__main__":
     main()

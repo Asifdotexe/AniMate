@@ -3,7 +3,7 @@ Module that contains the engine for the recommendation system (inference only).
 """
 
 import gc
-import os
+from pathlib import Path
 
 import joblib
 import pandas as pd
@@ -11,41 +11,46 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 
 from src.preprocessing import preprocess_text
+from src.utils import setup_logging
+
+logger = setup_logging("inference_engine")
 
 
-def load_models(model_dir: str) -> tuple[NearestNeighbors, TfidfVectorizer]:
+def load_models(model_dir: Path) -> tuple[NearestNeighbors, TfidfVectorizer]:
     """
     Load pre-trained model and vectorizer from the specified directory.
 
     :param model_dir: Directory containing the .joblib files.
     :return: A tuple containing the k-NN model and the TF-IDF vectorizer.
     """
-    knn_path = os.path.join(model_dir, "knn_model.joblib")
-    tfidf_path = os.path.join(model_dir, "tfidf_vectorizer.joblib")
+    knn_path = model_dir / "knn_model.joblib"
+    tfidf_path = model_dir / "tfidf_vectorizer.joblib"
 
-    if not os.path.exists(knn_path) or not os.path.exists(tfidf_path):
+    if not knn_path.exists() or not tfidf_path.exists():
         raise FileNotFoundError(
             f"Model artifacts not found in {model_dir}. Please run src/pipeline/train.py first."
         )
 
+    logger.info(f"Loading models from {model_dir}...")
     knn_model = joblib.load(knn_path)
     tfidf_vectorizer = joblib.load(tfidf_path)
 
     return knn_model, tfidf_vectorizer
 
 
-def load_processed_data(model_dir: str) -> pd.DataFrame:
+def load_processed_data(model_dir: Path) -> pd.DataFrame:
     """
     Load the processed dataframe from the model directory.
 
     :param model_dir: Directory containing the .pkl file.
     :return: The processed dataframe.
     """
-    data_path = os.path.join(model_dir, "processed_data.pkl")
-    if not os.path.exists(data_path):
+    data_path = model_dir / "processed_data.pkl"
+    if not data_path.exists():
         raise FileNotFoundError(
             f"Processed data not found in {model_dir}. Please run src/pipeline/train.py first."
         )
+    logger.info(f"Loading data from {data_path}...")
     return pd.read_pickle(data_path)
 
 

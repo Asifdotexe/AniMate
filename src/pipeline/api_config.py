@@ -11,6 +11,7 @@ References:
 """
 
 import os
+from pathlib import Path
 
 # API Connection Settings
 
@@ -51,8 +52,8 @@ DEFAULT_PAGE_LIMIT = 20
 
 # Directory for raw data storage relative to the project root
 # We assume the script is run from project root, but we can make this absolute if needed.
-DATA_RAW_DIR = os.path.join("data", "raw")
+DATA_RAW_DIR = Path("data") / "raw"
 
 # Name of the persistent master database file
 MASTER_DB_FILENAME = "anime_master_db.csv"
-MASTER_DB_PATH = os.path.join(DATA_RAW_DIR, MASTER_DB_FILENAME)
+MASTER_DB_PATH = DATA_RAW_DIR / MASTER_DB_FILENAME

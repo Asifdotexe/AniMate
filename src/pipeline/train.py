@@ -4,8 +4,8 @@ This script loads processed data, vectorizes it, trains a KNN model,
 and saves the artifacts to the models/ directory.
 """
 
-import os
 import sys
+from pathlib import Path
 
 import joblib
 import pandas as pd
@@ -14,13 +14,16 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.neighbors import NearestNeighbors
 
 # Add project root to sys.path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, "..", ".."))
-if project_root not in sys.path:
-    sys.path.append(project_root)
+current_dir = Path(__file__).resolve().parent
+project_root = current_dir.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.append(str(project_root))
 
 from src.preprocessing import preprocess_text
 from src import config
+from src.utils import setup_logging
+
+logger = setup_logging("train_model")
 
 
 def load_config() -> dict:
@@ -45,7 +48,7 @@ def load_processed_data(data_path: str) -> pd.DataFrame:
     :param data_path: Path to processed data.
     :return: DataFrame with processed data.
     """
-    if not os.path.exists(data_path):
+    if not data_path.exists():
         raise FileNotFoundError(f"Processed data not found at {data_path}. Run src/pipeline/process.py first.")
 
     df = pd.read_csv(data_path)
@@ -57,7 +60,7 @@ def load_processed_data(data_path: str) -> pd.DataFrame:
 
     # Ensure text column exists
     if "stemmed_synopsis" not in df.columns:
-        print("Regenerating stemmed_synopsis...")
+        logger.info("Regenerating stemmed_synopsis...")
         df["synopsis"] = df["synopsis"].fillna("")
         df["stemmed_synopsis"] = df["synopsis"].apply(preprocess_text)
     
@@ -74,14 +77,14 @@ def train_knn_model(df: pd.DataFrame, config: dict) -> tuple[NearestNeighbors, T
     """
     model_cfg = config.get("model", {})
     
-    print("Vectorizing data...")
+    logger.info("Vectorizing data...")
     vectorizer = TfidfVectorizer(
         stop_words="english", 
         max_features=model_cfg.get("max_features", 5000)
     )
     tfidf_matrix = vectorizer.fit_transform(df["stemmed_synopsis"])
 
-    print("Training model...")
+    logger.info("Training model...")
     knn = NearestNeighbors(
         n_neighbors=model_cfg.get("n_neighbors", 5),
         metric=model_cfg.get("metric", "cosine"),
@@ -99,16 +102,16 @@ def save_artifacts(models_dir: str, knn: NearestNeighbors, vectorizer: TfidfVect
     :param vectorizer: TfidfVectorizer.
     :param df: DataFrame with processed data.
     """
-    os.makedirs(models_dir, exist_ok=True)
-    joblib.dump(knn, os.path.join(models_dir, config.KNN_MODEL_FILE))
-    joblib.dump(vectorizer, os.path.join(models_dir, config.TFIDF_VECTORIZER_FILE))
-    df.to_pickle(os.path.join(models_dir, config.PROCESSED_DATA_PKL))
-    print(f"Artifacts saved to {models_dir}")
+    models_dir.mkdir(parents=True, exist_ok=True)
+    joblib.dump(knn, models_dir / config.KNN_MODEL_FILE)
+    joblib.dump(vectorizer, models_dir / config.TFIDF_VECTORIZER_FILE)
+    df.to_pickle(models_dir / config.PROCESSED_DATA_PKL)
+    logger.info(f"Artifacts saved to {models_dir}")
 
 
 def train():
     """Main training execution."""
-    print("Loading configuration...")
+    logger.info("Loading configuration...")
     
     try:
         model_config = load_config()
@@ -123,7 +126,7 @@ def train():
         
     except Exception:
         import traceback
-        print(f"Training failed:\n{traceback.format_exc()}")
+        logger.error(f"Training failed:\n{traceback.format_exc()}")
         sys.exit(1)
 
 
