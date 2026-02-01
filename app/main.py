@@ -138,6 +138,7 @@ def display_recommendations(recommendations: pd.DataFrame):
         if not image_url or not str(image_url).startswith(("http://", "https://")):
             image_url = "https://via.placeholder.com/300x450?text=No+Image"
 
+        # TODO: Add duration, favourite count and episode field as an output to display
         context = {
             "title": html.escape(str(row.get("title", "Unknown Title"))),
             "title_japanese": html.escape(str(row.get("japanese title"))) if pd.notna(row.get("japanese title")) else "",
