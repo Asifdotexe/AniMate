@@ -84,8 +84,6 @@ def display_recommendations(recommendations: pd.DataFrame):
     if recommendations.empty:
         st.warning("No recommendations found. Please try a different query.")
         return
-
-    st.markdown('<div class="anime-grid">', unsafe_allow_html=True)
     
     # Load card template
     try:
