@@ -96,6 +96,13 @@ def display_recommendations(recommendations: pd.DataFrame):
     # Render all cards in a single string to let CSS Grid handle the layout
     cards_html = ""
     for idx, row in recommendations.iterrows():
+
+        synopsis = row.get("synopsis")
+        if pd.isna(synopsis) or synopsis is None:
+            synopsis = "No synopsis available."
+        else:
+            synopsis = str(synopsis)
+
         # Prepared variables for template
         context = {
             "title": row.get("title", "Unknown Title"),
@@ -103,7 +110,7 @@ def display_recommendations(recommendations: pd.DataFrame):
             "score": f"{row.get('score', 'N/A')}",
             "rating": row.get("content rating", "N/A"),
             "image": row.get("image url", "https://via.placeholder.com/300x450?text=No+Image"),
-            "synopsis": (row.get("synopsis", "No synopsis available.") or "")[:200] + "...",
+            "synopsis": synopsis[:200] + "...",
             "genres": row.get("genres", "Anime")
         }
         
@@ -123,7 +130,7 @@ if st.session_state.page == "landing":
             return base64.b64encode(img_file.read()).decode()
 
     # Inject Background Image
-    bg_path = Path("app/assets/background.png")
+    bg_path = Path(__file__).parent / "assets" / "background.png"
     if bg_path.exists():
         bin_str = get_base64_image(bg_path)
         page_bg_img = f"""

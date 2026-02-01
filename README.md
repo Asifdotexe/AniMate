@@ -56,24 +56,7 @@ Under the hood, this isn't magic; it's high-dimensional mathematics.
     poetry run streamlit run app/main.py
     ```
 
-## 📂 Project Structure
-
-```
-RecommendationHaki/
-├── app/                  # Streamlit Application
-│   ├── main.py          # Entry point
-│   └── assets/          # Static assets (CSS, Images)
-├── src/                  # Core Logic
-│   ├── components/      # Data Ingestion, Transformation, Trainer
-│   ├── pipeline/        # Inference Engine, Training Pipeline
-│   ├── config.py        # Configuration Parser
-│   └── logger.py        # Logging Utility
-├── artifacts/            # Model & Data Artifacts (Joblib, PKL)
-├── config.yaml           # Centralized Configuration
-└── pyproject.toml        # Dependencies
-```
-
-## 🤝 Contribution
+## Contribution
 
 Feel free to fork this repository and submit pull requests. To train your own Haki, tweak the `config.yaml` hyperparameters!
 
