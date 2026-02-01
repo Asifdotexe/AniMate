@@ -10,6 +10,7 @@ from string import Template
 import pandas as pd
 import streamlit as st
 import html
+import subprocess
 
 # Add project root to sys.path for streamlit to find modules if run from app/
 # Assuming running via `streamlit run app/main.py` from root, or `streamlit run main.py` from app/
@@ -56,6 +57,34 @@ if css_path.exists():
 if "page" not in st.session_state:
     # Default to landing page
     st.session_state.page = "landing"
+
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def get_contribution_stats():
+    """
+    Fetches contribution statistics from git history.
+    Returns a dictionary mapping author names (lowercase) to commit counts.
+    """
+    try:
+        # Get shortlog with commit counts
+        result = subprocess.check_output(
+            ["git", "shortlog", "-sn", "--all"], 
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+        stats = {}
+        for line in result.strip().split('\n'):
+            if not line.strip():
+                continue
+            # Format is usually: "   25  Author Name"
+            parts = line.strip().split(maxsplit=1)
+            if len(parts) == 2:
+                count, name = parts
+                stats[name.lower()] = int(count)
+        return stats
+    except Exception as e:
+        print(f"Error fetching git stats: {e}")
+        return {}
 
 
 # Cache triggers
@@ -138,41 +167,12 @@ if st.session_state.page == "landing":
     bg_path = Path(__file__).parent / "assets" / "background.png"
     if bg_path.exists():
         bin_str = get_base64_image(bg_path)
-        page_bg_img = f"""
-        <style>
-        .stApp {{
-            background: transparent;
-        }}
-        .background-layer {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/png;base64,{bin_str}");
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            filter: blur(1.5px); /* Slight blur */
-            opacity: 0.25;     /* Low opacity */
-            z-index: -1;
-        }}
-        .background-overlay {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8));
-            z-index: -1;
-        }}
-        /* Remove pseudo-element approach if it conflicts */
-        .stApp::before {{ content: none; }}
-        </style>
-        <div class="background-layer"></div>
-        <div class="background-overlay"></div>
-        """
-        st.markdown(page_bg_img, unsafe_allow_html=True)
+        try:
+             bg_template = Template(load_html_template("background_style.html"))
+             page_bg_img = bg_template.substitute(bin_str=bin_str)
+             st.markdown(page_bg_img, unsafe_allow_html=True)
+        except FileNotFoundError:
+             st.warning("Background template not found.")
 
     try:
         hero_html = load_html_template("hero.html")
@@ -186,6 +186,40 @@ if st.session_state.page == "landing":
     with col2:
         if st.button("ACTIVATE HAKI", use_container_width=True):
              st.session_state.page = "recommendations"
+    
+    # Contributors Section
+    contribution_stats = get_contribution_stats()
+    
+    # Load contributors from config
+    contributors_data = config.contributors
+
+    try:
+        contributor_item_template = Template(load_html_template("contributor_item.html"))
+        contributors_wrapper_template = Template(load_html_template("contributors_wrapper.html"))
+        
+        items_html = ""
+        for c in contributors_data:
+            # Match name dynamically (case-insensitive)
+            commit_count = contribution_stats.get(c['name'].lower(), 0)
+            
+            # Fallback for known variations if needed, or rely on normalization
+            if commit_count == 0 and c['name'].lower() == "aditi mane":
+                 commit_count = contribution_stats.get("aditi mane", 0)
+
+            tooltip_text = f"{c['name']} • {commit_count} contributions"
+            
+            items_html += contributor_item_template.substitute(
+                github=c["github"],
+                tooltip_text=tooltip_text,
+                image=c["image"],
+                name=c["name"]
+            )
+            
+        contributors_html = contributors_wrapper_template.substitute(content=items_html)
+        st.markdown(contributors_html, unsafe_allow_html=True)
+
+    except FileNotFoundError:
+        st.error("Contributor templates not found.")
 
 # Recommendations Page
 else:

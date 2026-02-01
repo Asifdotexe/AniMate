@@ -238,3 +238,92 @@ h1 {
         transform: translateY(0);
     }
 }
+
+/* Contributors Section */
+.footer-contributors {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding-bottom: 1rem;
+    padding-top: 2rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+    z-index: 100;
+    pointer-events: none;
+    /* Let clicks pass through empty areas */
+}
+
+.contributors-container {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+    animation: fadeIn 2s ease-in-out;
+    pointer-events: auto;
+    /* Re-enable clicks on content */
+}
+
+.contributors-title {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+    text-align: center;
+}
+
+.contributor-link {
+    text-decoration: none;
+    position: relative;
+    display: inline-block;
+}
+
+.contributor-avatar {
+    width: 40px;
+    /* Slightly smaller for footer */
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    filter: grayscale(80%);
+    opacity: 0.7;
+}
+
+.contributor-link:hover .contributor-avatar {
+    filter: grayscale(0%);
+    opacity: 1;
+    border-color: var(--accent-color);
+    transform: scale(1.15);
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+}
+
+/* Tooltip */
+.contributor-link::after {
+    content: attr(data-name);
+    position: absolute;
+    bottom: 50px;
+    /* Position above the avatar since it's at the bottom */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.95);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    border: 1px solid #333;
+    z-index: 10;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    font-weight: 500;
+}
+
+.contributor-link:hover::after {
+    opacity: 1;
+}

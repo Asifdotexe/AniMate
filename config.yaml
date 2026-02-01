@@ -30,3 +30,21 @@ paths:
 model:
   top_k_recommendations: 10
   vectorizer_max_features: 5000
+
+# Project Contributors
+contributors:
+  - name: "Asif Sayyed"
+    github: "https://github.com/Asifdotexe"
+    image: "https://avatars.githubusercontent.com/u/115421661?v=4"
+  - name: "Pranjal Dhamane"
+    github: "https://github.com/PranjalDhamane"
+    image: "https://avatars.githubusercontent.com/u/131870182?v=4"
+  - name: "Tanvi Sivaraj"
+    github: "https://github.com/tanvisivaraj"
+    image: "https://avatars.githubusercontent.com/u/132070958?v=4"
+  - name: "Shrawani Thakur"
+    github: "https://github.com/str04"
+    image: "https://avatars.githubusercontent.com/u/123924840?v=4"
+  - name: "Aditi Mane"
+    github: "https://github.com/aditimane07"
+    image: "https://avatars.githubusercontent.com/u/129670339?v=4"
