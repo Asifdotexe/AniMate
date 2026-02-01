@@ -39,10 +39,11 @@ def load_html_template(filename: str) -> str:
 
 def format_number(num):
     """Formats a number with K/M suffixes."""
-    if pd.isna(num): return "0"
+    if pd.isna(num):
+        return "0"
     try:
         num = int(num)
-    except ValueError:
+    except (ValueError, TypeError):
         return "0"
         
     if num >= 1_000_000:

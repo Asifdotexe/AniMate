@@ -139,7 +139,7 @@ def process_features(df: pd.DataFrame) -> pd.DataFrame:
         if col not in df.columns:
             df[col] = "" # Handle missing columns gracefully
         else:
-            df[col] = df[col].astype(str).fillna("")
+            df[col] = df[col].fillna("").astype(str)
 
     df["combined_features"] = df[feature_cols].agg(" ".join, axis=1)
     

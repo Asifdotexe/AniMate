@@ -106,7 +106,13 @@ def get_recommendations(
     recommendations = data.iloc[indices[0]].copy()
     
     # Add distance column (smaller distance = better match)
-    recommendations["distance"] = distances[0]
+    if distances is None:
+        # Fallback if kneighbors returns None for distances
+        # Create a dummy distance array
+        import numpy as np
+        recommendations["distance"] = np.zeros(len(recommendations))
+    else:
+        recommendations["distance"] = distances[0]
 
     # Filter and sort
     final_recommendations = _filter_by_query(recommendations, query)

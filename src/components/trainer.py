@@ -66,7 +66,7 @@ def load_processed_data(data_path: Path) -> pd.DataFrame:
         for col in feature_cols:
             if col not in df.columns:
                 df[col] = ""
-            df[col] = df[col].astype(str).fillna("")
+            df[col] = df[col].fillna("").astype(str)
             
         df["combined_features"] = df[feature_cols].agg(" ".join, axis=1)
 
