@@ -8,9 +8,13 @@ app:
 # Data Ingestion
 api:
   jikan_base_url: "https://api.jikan.moe/v4"
-  batch_size: 50
+  batch_size: 25
   delay_seconds: 1.0
   max_retries: 3
+  
+  # Total Anime Scraped = batch_size * max_pages
+  # Example: 25 items/page * 100 pages = 2500 records
+  max_pages: 100
 
 # File Paths (Relative to project root)
 paths:

@@ -161,6 +161,9 @@ def build_anime_dataset(start_page: int = 1, limit_pages: int = 5) -> pd.DataFra
         items = data.get("data", [])
         if not items:
             logger.info(f"No data found on page {page}. Stopping early.")
+            logger.info(f"Response Keys: {list(data.keys())}")
+            if "error" in data:
+                logger.error(f"API Error: {data['error']}")
             break
 
         for item in items:
@@ -248,7 +251,7 @@ def main():
     master_df = load_master_dataset(master_path)
 
     # Fetch new data
-    new_data_df = build_anime_dataset(start_page=1, limit_pages=5)
+    new_data_df = build_anime_dataset(start_page=1, limit_pages=config.api.max_pages)
 
     # Merge (Upsert)
     final_df = merge_datasets(master_df, new_data_df)
