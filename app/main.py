@@ -9,6 +9,7 @@ from string import Template
 
 import pandas as pd
 import streamlit as st
+import html
 
 # Add project root to sys.path for streamlit to find modules if run from app/
 # Assuming running via `streamlit run app/main.py` from root, or `streamlit run main.py` from app/
@@ -104,14 +105,18 @@ def display_recommendations(recommendations: pd.DataFrame):
             synopsis = str(synopsis)
 
         # Prepared variables for template
+        image_url = row.get("image url", "")
+        if not image_url or not str(image_url).startswith(("http://", "https://")):
+            image_url = "https://via.placeholder.com/300x450?text=No+Image"
+
         context = {
-            "title": row.get("title", "Unknown Title"),
-            "title_japanese": row.get("japanese title") if pd.notna(row.get("japanese title")) else "",
-            "score": f"{row.get('score', 'N/A')}",
-            "rating": row.get("content rating", "N/A"),
-            "image": row.get("image url", "https://via.placeholder.com/300x450?text=No+Image"),
-            "synopsis": synopsis[:200] + "...",
-            "genres": row.get("genres", "Anime")
+            "title": html.escape(str(row.get("title", "Unknown Title"))),
+            "title_japanese": html.escape(str(row.get("japanese title"))) if pd.notna(row.get("japanese title")) else "",
+            "score": html.escape(f"{row.get('score', 'N/A')}"),
+            "rating": html.escape(str(row.get("content rating", "N/A"))),
+            "image": html.escape(str(image_url)),
+            "synopsis": html.escape(synopsis[:200] + "..."),
+            "genres": html.escape(str(row.get("genres", "Anime")))
         }
         
         cards_html += card_html_template.substitute(context)
