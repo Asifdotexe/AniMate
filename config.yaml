@@ -25,10 +25,11 @@ paths:
   # Static Assets
   logo: "app/assets/logo.png"
   css: "app/assets/styles.css"
+  favicon: "app/assets/favicon.png"
 
 # Model Hyperparameters
 model:
-  top_k_recommendations: 10
+  top_k_recommendations: 4
   vectorizer_max_features: 5000
 
 # Project Contributors

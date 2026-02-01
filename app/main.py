@@ -39,7 +39,7 @@ def load_html_template(filename: str) -> str:
 
 
 # Streamlit app setup
-st.set_page_config(page_title=config.app.name, page_icon="🎬", layout="wide")
+st.set_page_config(page_title=config.app.name, page_icon=config.paths.get("favicon", "app/assets/favicon.png"), layout="wide")
 
 # Load custom styles
 css_path = Path(config.paths.css)
