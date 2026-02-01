@@ -13,8 +13,8 @@ api:
   max_retries: 3
   
   # Total Anime Scraped = batch_size * max_pages
-  # Example: 25 items/page * 100 pages = 2500 records
-  max_pages: 100
+  # Example: 25 items/page * 200 pages = 5000 records
+  max_pages: 200
 
 # File Paths (Relative to project root)
 paths:
