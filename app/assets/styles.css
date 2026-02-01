@@ -1,5 +1,7 @@
 /* Otaku Stream Theme (Netflix-Inspired) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Bebas+Neue&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500&display=swap');
+
 
 :root {
     --bg-color: #141414;
@@ -10,6 +12,7 @@
     --text-muted: #B3B3B3;
     --font-primary: 'Inter', sans-serif;
     --font-heading: 'Bebas Neue', sans-serif;
+    --font-japanese: 'Noto Sans JP', sans-serif;
 }
 
 /* Global Reset & Streamlit Overrides */
@@ -200,7 +203,7 @@ h1 {
     color: var(--accent-color);
     /* Use accent color to make it pop */
     margin-bottom: 0.75rem;
-    font-family: 'Noto Sans JP', sans-serif;
+    font-family: var(--font-japanese);
     /* Good for Japanese characters */
     opacity: 0.9;
     min-height: 1.2em;
