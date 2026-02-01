@@ -52,6 +52,25 @@ def load_processed_data(data_path: Path) -> pd.DataFrame:
         df["stemmed_synopsis"] = df["synopsis"].apply(preprocess_text)
 
     df["stemmed_synopsis"] = df["stemmed_synopsis"].fillna("")
+
+    # Ensure combined_features column exists (backward compatibility or regeneration)
+    if "combined_features" not in df.columns:
+        logger.warning("'combined_features' not found in data. Regenerating...")
+        
+        feature_cols = [
+            "title", "english title", "japanese title", 
+            "genres", "themes", "studio", "producer", 
+            "source", "content rating", "stemmed_synopsis"
+        ]
+        
+        for col in feature_cols:
+            if col not in df.columns:
+                df[col] = ""
+            df[col] = df[col].astype(str).fillna("")
+            
+        df["combined_features"] = df[feature_cols].agg(" ".join, axis=1)
+
+    df["combined_features"] = df["combined_features"].fillna("")
     return df
 
 
@@ -68,7 +87,7 @@ def train_knn_model(df: pd.DataFrame) -> tuple[NearestNeighbors, TfidfVectorizer
         stop_words="english", max_features=model_cfg.vectorizer_max_features
     )
     # Ensure stemmed_synopsis is string
-    tfidf_matrix = vectorizer.fit_transform(df["stemmed_synopsis"].astype(str))
+    tfidf_matrix = vectorizer.fit_transform(df["combined_features"].astype(str))
 
     logger.info("Training model...")
     knn = NearestNeighbors(

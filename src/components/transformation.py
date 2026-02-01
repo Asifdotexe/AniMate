@@ -26,9 +26,13 @@ CATEGORY_COLUMNS = [
     "rating",
     "status",
     "premiered",
-    "genre",
+    "status",
+    "premiered",
+    "genres",
+    "themes",
     "studio",
     "producer",
+    "content rating",
 ]
 NLTK_RESOURCES = ["corpora/stopwords", "tokenizers/punkt_tab", "tokenizers/punkt"]
 
@@ -115,6 +119,30 @@ def process_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     tqdm.pandas(desc="Preprocessing Synopsis")
     df["stemmed_synopsis"] = df["synopsis"].progress_apply(preprocess_text)
+
+    # create combined features for vectorization
+    feature_cols = [
+        "title",
+        "english title",
+        "japanese title",
+        "genres",
+        "themes",
+        "studio",
+        "producer",
+        "source",
+        "content rating",
+        "stemmed_synopsis"
+    ]
+    
+    # Fill NAs with empty string for all feature columns
+    for col in feature_cols:
+        if col not in df.columns:
+            df[col] = "" # Handle missing columns gracefully
+        else:
+            df[col] = df[col].astype(str).fillna("")
+
+    df["combined_features"] = df[feature_cols].agg(" ".join, axis=1)
+    
     return df
 
 

@@ -100,20 +100,24 @@ def get_recommendations(
 
     # Query more neighbors to allow for filtering
     n_neighbors_query = top_n + 5
-    _, indices = knn_model.kneighbors(query_tfidf, n_neighbors=n_neighbors_query)
+    distances, indices = knn_model.kneighbors(query_tfidf, n_neighbors=n_neighbors_query)
 
     # Use iloc to get rows, copy to avoid SettingWithCopyWarning
     recommendations = data.iloc[indices[0]].copy()
+    
+    # Add distance column (smaller distance = better match)
+    recommendations["distance"] = distances[0]
 
     # Filter and sort
     final_recommendations = _filter_by_query(recommendations, query)
 
     if "score" not in final_recommendations.columns:
-        # Fallback verification
-        raise ValueError("The 'score' column is missing. Cannot sort recommendations.")
+        # Fallback
+        final_recommendations["score"] = 0
 
+    # Sort primarily by distance (asc), secondarily by score (desc)
     final_recommendations = final_recommendations.sort_values(
-        by="score", ascending=False
+        by=["distance", "score"], ascending=[True, False]
     ).head(top_n)
 
     # Cleanup memory
