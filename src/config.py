@@ -1,5 +1,5 @@
 """
-Configuration file parser for AniMate.
+Configuration file parser for RecommendationHaki.
 """
 
 from pathlib import Path

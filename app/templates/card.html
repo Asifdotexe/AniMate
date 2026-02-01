@@ -1,0 +1,24 @@
+<!--
+    Target: Anime Card Template
+    Purpose: Defines the structure for a single anime recommendation card.
+    Context: Used in the grid layout on the recommendations page to display anime details (Image, Title, Rating, Synopsis).
+-->
+
+<div class="anime-card">
+    <div class="card-image-container">
+        <img src="$image" alt="$title" class="card-image"
+            onerror="this.src='https://via.placeholder.com/300x450?text=No+Image'">
+        <div class="card-badges">
+            <span class="badge badge-score">$score</span>
+            <span class="badge badge-rating">$rating</span>
+        </div>
+    </div>
+    <div class="card-content">
+        <div class="card-title">$title</div>
+        <div class="card-subtitle">$title_japanese</div>
+        <div class="card-meta">
+            <span>$genres</span>
+        </div>
+        <p class="card-synopsis">$synopsis</p>
+    </div>
+</div>

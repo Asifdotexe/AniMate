@@ -1,14 +1,16 @@
 """
-AniMate is a Python-based anime recommendation system
-that utilizes natural language processing (NLP) to suggest anime based on user preferences.
+RecommendationHaki (見聞色) is an intelligent anime discovery engine
+that uses Observation Haki (Matrix Factorization & KNN) to predict your next favorite show.
 """
 
-import random
 import sys
 from pathlib import Path
+from string import Template
 
 import pandas as pd
 import streamlit as st
+import html
+import subprocess
 
 # Add project root to sys.path for streamlit to find modules if run from app/
 # Assuming running via `streamlit run app/main.py` from root, or `streamlit run main.py` from app/
@@ -22,19 +24,67 @@ from src import logger
 from src.config import config
 from src.pipeline import inference as engine
 
+
+# Helper to load templates
+def load_html_template(filename: str) -> str:
+    """
+    Loads a template file from the templates directory.
+
+    :param filename: The name of the template file to load.
+    :return: The content of the template file.
+    """
+    template_path = Path(__file__).parent / "templates" / filename
+    with open(template_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
 # Streamlit app setup
-st.set_page_config(page_title=config.app.name, page_icon="🎬")
+st.set_page_config(page_title=config.app.name, page_icon=config.paths.get("favicon", "app/assets/favicon.png"), layout="wide")
 
 # Load custom styles
 css_path = Path(config.paths.css)
 if css_path.exists():
     with open(file=css_path, mode="r", encoding="utf-8") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+        custom_css = f.read()
+        
+    st.markdown(
+        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ionicons/5.5.2/collection/components/icon/icon.min.css">',
+        unsafe_allow_html=True
+    )
+    st.markdown(f'<style>{custom_css}</style>', unsafe_allow_html=True)
 
 # Initialize session state for navigation
 if "page" not in st.session_state:
     # Default to landing page
     st.session_state.page = "landing"
+
+
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def get_contribution_stats():
+    """
+    Fetches contribution statistics from git history.
+    Returns a dictionary mapping author names (lowercase) to commit counts.
+    """
+    try:
+        # Get shortlog with commit counts
+        result = subprocess.check_output(
+            ["git", "shortlog", "-sn", "--all"], 
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+        stats = {}
+        for line in result.strip().split('\n'):
+            if not line.strip():
+                continue
+            # Format is usually: "   25  Author Name"
+            parts = line.strip().split(maxsplit=1)
+            if len(parts) == 2:
+                count, name = parts
+                stats[name.lower()] = int(count)
+        return stats
+    except Exception as e:
+        print(f"Error fetching git stats: {e}")
+        return {}
 
 
 # Cache triggers
@@ -60,60 +110,124 @@ data, knn_model, tfidf_vectorizer = load_resources()
 
 
 def display_recommendations(recommendations: pd.DataFrame):
-    """Display the list of recommended anime."""
+    """Display the list of recommended anime as a grid of cards."""
     if recommendations.empty:
         st.warning("No recommendations found. Please try a different query.")
         return
+    
+    # Load card template
+    try:
+        card_html_template = Template(load_html_template("card.html"))
+    except FileNotFoundError:
+        st.error("Template 'card.html' not found!")
+        return
 
-    columns_to_show = [
-        "genres",
-        "synopsis",
-        "studio",
-        "demographic",
-        "source",
-        "score",
-        "episodes",
-        "release year",
-    ]
+    
+    # Render all cards in a single string to let CSS Grid handle the layout
+    cards_html = ""
+    for idx, row in recommendations.iterrows():
 
-    for _, row in recommendations.iterrows():
-        title = row["title"]
-        with st.expander(f"**{title}**"):
-            # Dynamic column display
-            for col in columns_to_show:
-                if col in row.index and pd.notna(row[col]):
-                    label = col.replace("_", " ").title()
-                    st.write(f"**{label}:** {row[col]}")
+        synopsis = row.get("synopsis")
+        if pd.isna(synopsis) or synopsis is None:
+            synopsis = "No synopsis available."
+        else:
+            synopsis = str(synopsis)
+
+        # Prepared variables for template
+        image_url = row.get("image url", "")
+        if not image_url or not str(image_url).startswith(("http://", "https://")):
+            image_url = "https://via.placeholder.com/300x450?text=No+Image"
+
+        context = {
+            "title": html.escape(str(row.get("title", "Unknown Title"))),
+            "title_japanese": html.escape(str(row.get("japanese title"))) if pd.notna(row.get("japanese title")) else "",
+            "score": html.escape(f"{row.get('score', 'N/A')}"),
+            "rating": html.escape(str(row.get("content rating", "N/A"))),
+            "image": html.escape(str(image_url)),
+            "synopsis": html.escape(synopsis[:200] + "..."),
+            "genres": html.escape(str(row.get("genres", "Anime")))
+        }
+        
+        cards_html += card_html_template.substitute(context)
+
+    # Wrap in grid container
+    full_html = f'<div class="anime-grid">{cards_html}</div>'
+    st.markdown(full_html, unsafe_allow_html=True)
 
 
 # Landing Page
 if st.session_state.page == "landing":
-    st.title(f"Welcome to {config.app.name}!")
+    import base64
 
-    st.caption(
-        """AniMate is a Python-based anime recommendation system
-        that utilizes natural language processing (NLP) to suggest anime based on user preferences."""
-    )
+    def get_base64_image(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
 
-    # Display logo if available
-    logo_path = Path(config.paths.logo)
-    if logo_path.exists():
-        st.image(str(logo_path), width=200)
+    # Inject Background Image
+    bg_path = Path(__file__).parent / "assets" / "background.png"
+    if bg_path.exists():
+        bin_str = get_base64_image(bg_path)
+        try:
+             bg_template = Template(load_html_template("background_style.html"))
+             page_bg_img = bg_template.substitute(bin_str=bin_str)
+             st.markdown(page_bg_img, unsafe_allow_html=True)
+        except FileNotFoundError:
+             st.warning("Background template not found.")
 
-    st.caption(
-        """
-        If you enjoy our recommendations, please consider starring our repository on GitHub ⭐!
-        """
-    )
+    try:
+        hero_html = load_html_template("hero.html")
+        st.markdown(hero_html, unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.error("Hero template not found.")
 
-    if st.button("Recommend Me Something"):
-        st.session_state.page = "recommendations"
+    # Display logo and button centered
+    col1, col2, col3 = st.columns([1, 1, 1])
+    
+    with col2:
+        if st.button("ACTIVATE HAKI", use_container_width=True):
+             st.session_state.page = "recommendations"
+    
+    # Contributors Section
+    contribution_stats = get_contribution_stats()
+    
+    # Load contributors from config
+    contributors_data = config.contributors
 
-    # Contributors section removed as it's not in the new config.
+    try:
+        contributor_item_template = Template(load_html_template("contributor_item.html"))
+        contributors_wrapper_template = Template(load_html_template("contributors_wrapper.html"))
+        
+        items_html = ""
+        for c in contributors_data:
+            # Match name dynamically (case-insensitive)
+            commit_count = contribution_stats.get(c['name'].lower(), 0)
+            
+            # Fallback for known variations if needed, or rely on normalization
+            if commit_count == 0 and c['name'].lower() == "aditi mane":
+                 commit_count = contribution_stats.get("aditi mane", 0)
+
+            tooltip_text = f"{c['name']} • {commit_count} contributions"
+            
+            items_html += contributor_item_template.substitute(
+                github=c["github"],
+                tooltip_text=tooltip_text,
+                image=c["image"],
+                name=c["name"]
+            )
+            
+        contributors_html = contributors_wrapper_template.substitute(content=items_html)
+        st.markdown(contributors_html, unsafe_allow_html=True)
+
+    except FileNotFoundError:
+        st.error("Contributor templates not found.")
 
 # Recommendations Page
 else:
-    st.title(config.app.name)
+    if st.button("Home", icon=":material/home:"):
+        st.session_state.page = "landing"
+        st.rerun()
+
+    st.markdown('<h1 style="margin-bottom: 0;">RECOMMENDATION HAKI</h1>', unsafe_allow_html=True)
 
     query_col, num_col = st.columns([4, 1])
     with query_col:
@@ -128,7 +242,7 @@ else:
             value=config.model.top_k_recommendations,
         )
 
-    if st.button("Get Recommendations"):
+    if st.button("Get Recommendations", use_container_width=True):
         if not user_query:
             st.warning("Please enter a valid query to get recommendations.")
         else:
