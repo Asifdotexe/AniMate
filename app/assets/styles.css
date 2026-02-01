@@ -210,6 +210,24 @@ h1 {
     /* Ensure space exists even if empty (though we handle empty via logic) */
 }
 
+.card-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    font-weight: 500;
+}
+
+.card-stats span+span::before {
+    content: "•";
+    margin-right: 8px;
+    opacity: 0.5;
+    color: var(--accent-color);
+}
+
 .card-meta {
     font-size: 0.75rem;
     color: #bbb;

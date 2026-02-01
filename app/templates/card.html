@@ -3,7 +3,6 @@
     Purpose: Defines the structure for a single anime recommendation card.
     Context: Used in the grid layout on the recommendations page to display anime details (Image, Title, Rating, Synopsis).
 -->
-
 <div class="anime-card">
     <div class="card-image-container">
         <img src="$image" alt="$title" class="card-image"
@@ -18,6 +17,11 @@
         <div class="card-subtitle">$title_japanese</div>
         <div class="card-meta">
             <span>$genres</span>
+        </div>
+        <div class="card-stats">
+            <span>$episodes EP</span>
+            <span>$duration</span>
+            <span>&hearts; $favorites</span>
         </div>
         <p class="card-synopsis">$synopsis</p>
     </div>

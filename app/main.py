@@ -37,6 +37,21 @@ def load_html_template(filename: str) -> str:
     with open(template_path, "r", encoding="utf-8") as f:
         return f.read()
 
+def format_number(num):
+    """Formats a number with K/M suffixes."""
+    if pd.isna(num):
+        return "0"
+    try:
+        num = int(num)
+    except (ValueError, TypeError):
+        return "0"
+        
+    if num >= 1_000_000:
+        return f"{num/1_000_000:.1f}M"
+    if num >= 1_000:
+        return f"{num/1_000:.1f}k"
+    return str(num)
+
 
 # Streamlit app setup
 st.set_page_config(page_title=config.app.name, page_icon=config.paths.get("favicon", "app/assets/favicon.png"), layout="wide")
@@ -138,6 +153,7 @@ def display_recommendations(recommendations: pd.DataFrame):
         if not image_url or not str(image_url).startswith(("http://", "https://")):
             image_url = "https://via.placeholder.com/300x450?text=No+Image"
 
+        # Prepare context variables
         context = {
             "title": html.escape(str(row.get("title", "Unknown Title"))),
             "title_japanese": html.escape(str(row.get("japanese title"))) if pd.notna(row.get("japanese title")) else "",
@@ -145,7 +161,10 @@ def display_recommendations(recommendations: pd.DataFrame):
             "rating": html.escape(str(row.get("content rating", "N/A"))),
             "image": html.escape(str(image_url)),
             "synopsis": html.escape(synopsis[:200] + "..."),
-            "genres": html.escape(str(row.get("genres", "Anime")))
+            "genres": html.escape(str(row.get("genres", "Anime"))),
+            "episodes": html.escape(str(row.get("episodes", "?")).replace(".0", "")),
+            "duration": html.escape(str(row.get("duration", "Unknown")).replace(" min per ep", "m").replace(" hr", "h").replace(" min", "m")),
+            "favorites": format_number(row.get("favorites", 0))
         }
         
         cards_html += card_html_template.substitute(context)
