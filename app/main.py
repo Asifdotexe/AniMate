@@ -268,7 +268,7 @@ else:
             st.write("### Recommendations based on your input:")
 
             with st.spinner("Finding anime for you..."):
-                results = engine.get_recommendations(
+                results = engine.recommend_by_description(
                     user_query,
                     tfidf_vectorizer,
                     knn_model,
