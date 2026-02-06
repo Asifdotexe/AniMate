@@ -43,12 +43,9 @@ st.markdown("_Build your watch history to get personalized recommendations._")
 
 # Search & add section
 st.write("### 1. Build your history")
-search_col, add_col = st.columns([4, 1])
-
-with search_col:
-    search_query = st.text_input(
-        "Search for an anime to add:", placeholder="e.g. Naruto"
-    ).strip()
+search_query = st.text_input(
+    "Search for an anime to add:", placeholder="e.g. Naruto"
+).strip()
 
 if search_query:
     results = engine.search_anime_titles(search_query, data, limit=5)
