@@ -111,7 +111,7 @@ def display_recommendations(recommendations: pd.DataFrame) -> None:
             "score": html.escape(f"{row.get('score', 'N/A')}"),
             "rating": html.escape(str(row.get("content rating", "N/A"))),
             "image": html.escape(str(image_url)),
-            "synopsis": html.escape(synopsis[:200] + "..."),
+            "synopsis": html.escape(synopsis[:200] + "..." if len(synopsis) > 200 else synopsis),
             "genres": html.escape(str(row.get("genres", "Anime"))),
             "episodes": html.escape(str(row.get("episodes", "?")).replace(".0", "")),
             "duration": html.escape(
