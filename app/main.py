@@ -1,6 +1,6 @@
 """
-RecommendationHaki (見聞色) is an intelligent anime discovery engine.
-Main Entry Point / Landing Page.
+RecommendationHaki (見聞色) is an intelligent anime discovery engine
+that uses Observation Haki (Matrix Factorization & KNN) to predict your next favorite show.
 """
 
 import base64
@@ -98,6 +98,7 @@ try:
     items_html = ""
     for c in contributors_data:
         commit_count = contribution_stats.get(c["name"].lower(), 0)
+        tooltip_text = f"{c['name']} • {commit_count} contributions"
 
         items_html += contributor_item_template.substitute(
             github=c["github"],
