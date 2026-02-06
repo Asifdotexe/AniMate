@@ -34,6 +34,7 @@ def test_get_recommendations(mock_preprocess, mock_data):
 
     # Mock KNN Model
     mock_knn = MagicMock()
+    mock_knn.n_samples_fit_ = 100
     # Return 2 neighbors: indices 0 and 2 (Anime A and Anime C)
     mock_knn.kneighbors.return_value = (None, [[0, 2]])
 
