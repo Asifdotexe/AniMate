@@ -34,7 +34,7 @@ def get_contribution_stats():
     """Fetches contribution statistics from git history."""
     try:
         result = subprocess.check_output(
-            ["git", "shortlog", "-sn", "--all"], stderr=subprocess.STDOUT, text=True
+            ["git", "shortlog", "-sn", "--all"], stderr=subprocess.STDOUT, text=True, timeout=10
         )
         stats = {}
         for line in result.strip().split("\n"):
