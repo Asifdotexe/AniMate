@@ -72,7 +72,7 @@ if search_query:
                             st.session_state.history_list.append(item["title"])
                             st.rerun()
     else:
-        st.info("No anime description found matching that title.")
+        st.info("No anime found matching that title.")
 
 # Manage list section
 if st.session_state.history_list:
