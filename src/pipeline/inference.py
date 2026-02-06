@@ -4,6 +4,7 @@ Module that contains the engine for the recommendation system (inference only).
 
 import gc
 from pathlib import Path
+from typing import Optional
 
 import joblib
 import numpy as np
@@ -54,9 +55,9 @@ def search_anime_titles(query: str, df: pd.DataFrame, limit: int = 10) -> list[d
         return []
 
     # Case-insensitive search
-    mask = df["title"].str.contains(query, case=False, na=False) | df[
+    mask = df["title"].str.contains(query, case=False, na=False, regex=False) | df[
         "english title"
-    ].str.contains(query, case=False, na=False)
+    ].str.contains(query, case=False, na=False, regex=False)
 
     matches = df[mask].head(limit)
 
@@ -138,7 +139,7 @@ def recommend_by_description(
     query_tfidf = tfidf_vectorizer.transform([query_processed])
 
     # Query more neighbors to allow for filtering
-    n_neighbors_query = top_n + 5
+    n_neighbors_query = min(top_n + 5, knn_model.n_samples_fit_)
     distances, indices = knn_model.kneighbors(
         query_tfidf, n_neighbors=n_neighbors_query
     )
@@ -174,7 +175,7 @@ def recommend_by_description(
 
 def get_anime_vector(
     title_query: str, dataframe: pd.DataFrame, vectorizer: TfidfVectorizer
-) -> tuple[np.ndarray, str]:
+) -> tuple[Optional[np.ndarray], Optional[str]]:
     """
     Finds an anime by title and returns its TF-IDF vector.
     :param title_query: The title to search for.
@@ -210,7 +211,7 @@ def get_anime_vector(
 
 def get_user_history_vectors(
     history_titles: list[str], df: pd.DataFrame, vectorizer: TfidfVectorizer
-) -> tuple[np.ndarray, list[str]]:
+) -> tuple[Optional[np.ndarray], list[str]]:
     """
     Converts a list of titles into a matrix of vectors.
     :param history_titles: List of titles to convert.
