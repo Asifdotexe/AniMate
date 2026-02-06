@@ -142,3 +142,14 @@ def inject_custom_css() -> None:
             unsafe_allow_html=True,
         )
         st.markdown(f"<style>{custom_css}</style>", unsafe_allow_html=True)
+
+    # Hide Sidebar globally
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"] {display: none;}
+        [data-testid="collapsedControl"] {display: none;}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )

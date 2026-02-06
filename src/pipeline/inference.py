@@ -363,6 +363,12 @@ def recommend_by_history(
         candidate_anime_list.append(
             {
                 "title": title,
+                "image url": data["row"].get("image url"),
+                "japanese title": data["row"].get("japanese title"),
+                "synopsis": data["row"].get("synopsis"),
+                "content rating": data["row"].get("content rating"),
+                "episodes": data["row"].get("episodes"),
+                "duration": data["row"].get("duration"),
                 "genres": data["row"].get("genres"),
                 "themes": data["row"].get("themes"),
                 "similarity_sum": data["similarity_sum"],
