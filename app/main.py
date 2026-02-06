@@ -98,11 +98,6 @@ try:
     items_html = ""
     for c in contributors_data:
         commit_count = contribution_stats.get(c["name"].lower(), 0)
-        # Fallback for known variations if needed
-        if commit_count == 0 and c["name"].lower() == "aditi mane":
-            commit_count = contribution_stats.get("aditi mane", 0)
-
-        tooltip_text = f"{c['name']} • {commit_count} contributions"
 
         items_html += contributor_item_template.substitute(
             github=c["github"],
