@@ -40,6 +40,38 @@ def load_models() -> tuple[NearestNeighbors, TfidfVectorizer]:
     return knn_model, tfidf_vectorizer
 
 
+
+def search_anime_titles(query: str, df: pd.DataFrame, limit: int = 10) -> list[dict]:
+    """
+    Search for anime titles matching the query.
+    Returns a list of dictionaries with title, image, and year.
+    
+    :param query: The search query.
+    :param df: The DataFrame containing the anime data.
+    :param limit: The maximum number of results to return.
+    :return: A list of dictionaries containing the search results.
+    """
+    if not query or len(query) < 2:
+        return []
+        
+    # Case-insensitive search
+    mask = df['title'].str.contains(query, case=False, na=False) | \
+           df['english title'].str.contains(query, case=False, na=False)
+           
+    matches = df[mask].head(limit)
+    
+    results = []
+    for _, row in matches.iterrows():
+        results.append({
+            'title': row['title'],
+            'english_title': row['english title'] if pd.notna(row['english title']) else "",
+            'image_url': row['image url'] if pd.notna(row['image url']) else "",
+            'year': int(row['release year']) if pd.notna(row['release year']) else "N/A"
+        })
+        
+    return results
+
+
 def load_processed_data() -> pd.DataFrame:
     """
     Load the processed dataframe from the configured path.
