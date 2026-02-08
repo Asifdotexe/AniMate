@@ -34,13 +34,14 @@ def test_get_recommendations(mock_preprocess, mock_data):
 
     # Mock KNN Model
     mock_knn = MagicMock()
+    mock_knn.n_samples_fit_ = 100
     # Return 2 neighbors: indices 0 and 2 (Anime A and Anime C)
     mock_knn.kneighbors.return_value = (None, [[0, 2]])
 
     # Add score column which is required for sorting
     mock_data["score"] = [9.0, 8.0, 7.0]
 
-    recs = engine.get_recommendations(
+    recs = engine.recommend_by_description(
         "query", mock_vectorizer, mock_knn, mock_data, top_n=2
     )
 
