@@ -4,6 +4,7 @@ Description based anime recommendation page.
 
 import sys
 from pathlib import Path
+
 import streamlit as st
 
 # Add project root to sys.path
@@ -31,7 +32,7 @@ if st.button("Home", icon=":material/home:"):
     st.switch_page("main.py")
 
 st.markdown(
-    '<h1 style="margin-bottom: 0;">Description Based Recommendation</h1>',
+    '<h1 style="margin-bottom: 0;">Description Matcher</h1>',
     unsafe_allow_html=True,
 )
 st.markdown("_Describe a plot or feeling, and we'll find the anime that matches._")

@@ -9,11 +9,11 @@ import sys
 from pathlib import Path
 from string import Template
 
+import streamlit as st
+
 # Add project root to sys.path
 if str(Path(__file__).parent.parent) not in sys.path:
     sys.path.append(str(Path(__file__).parent.parent))
-
-import streamlit as st
 
 from app.utils import config, inject_custom_css, load_html_template
 
@@ -78,11 +78,23 @@ st.markdown("<br>", unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 
 with col1:
-    if st.button("Description Based", use_container_width=True, type="primary"):
+    if st.button(
+        "Description Matcher",
+        icon=":material/manage_search:",
+        use_container_width=True,
+        type="primary",
+        help="Describe a plot or feeling to find your next anime.",
+    ):
         st.switch_page("pages/description_based.py")
 
 with col2:
-    if st.button("History Based", use_container_width=True, type="primary"):
+    if st.button(
+        "Curator Mode",
+        icon=":material/history_edu:",
+        use_container_width=True,
+        type="primary",
+        help="Build a watch history to get personalized recommendations.",
+    ):
         st.switch_page("pages/history_based.py")
 
 # Contributors Section

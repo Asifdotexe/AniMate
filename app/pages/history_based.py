@@ -4,6 +4,7 @@ History based anime recommendation page.
 
 import sys
 from pathlib import Path
+
 import streamlit as st
 
 # Add project root to sys.path
@@ -36,7 +37,7 @@ if st.button("Home", icon=":material/home:"):
     st.switch_page("main.py")
 
 st.markdown(
-    '<h1 style="margin-bottom: 0;">History Based Recommendation</h1>',
+    '<h1 style="margin-bottom: 0;">Curator Mode</h1>',
     unsafe_allow_html=True,
 )
 st.markdown("_Build your watch history to get personalized recommendations._")
@@ -68,7 +69,11 @@ if search_query:
                     if item["title"] in st.session_state.history_list:
                         st.success("Added")
                     else:
-                        if st.button("Add (+)", key=f"add_{item['title']}"):
+                        if st.button(
+                            "Add",
+                            icon=":material/add_circle:",
+                            key=f"add_{item['title']}",
+                        ):
                             st.session_state.history_list.append(item["title"])
                             st.rerun()
     else:
@@ -86,7 +91,11 @@ if st.session_state.history_list:
         with col1:
             st.info(title)
         with col2:
-            if st.button("Remove (x)", key=f"rem_{i}"):
+            if st.button(
+                "Remove",
+                icon=":material/delete:",
+                key=f"rem_{i}",
+            ):
                 st.session_state.history_list.pop(i)
                 st.rerun()
 
